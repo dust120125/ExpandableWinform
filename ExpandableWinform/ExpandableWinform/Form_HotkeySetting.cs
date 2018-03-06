@@ -104,16 +104,19 @@ namespace ExpandableWinform
                         Size = new Size(22, 22),
                         //bt.TabIndex = i * 2 + 1;
                         Text = "☓",
-                        UseVisualStyleBackColor = true
+                        UseVisualStyleBackColor = true,
+                        Tag = tb
                     };
-
+                    bt.Click += Delete_Click;
+                                        
                     Label lab = new Label
                     {
                         AutoSize = true,
                         Location = new Point(8, 11 + i * 28),
-                        Size = new Size(33, 12),
-                        Text = tmpHks[i].name
+                        Size = new Size(33, 12)
                     };
+                    bool got = exa.strRes.TryGetValue("str_" + tmpHks[i].id, out string desc);
+                    lab.Text = got ? desc : tmpHks[i].name;
 
                     page.Controls.Add(tb);
                     page.Controls.Add(bt);
@@ -123,6 +126,16 @@ namespace ExpandableWinform
                 page.Tag = new object[] { exa, textBoxes };
                 tabControl1.Controls.Add(page);
             }
+        }
+
+        private void Delete_Click(object sender, EventArgs e)
+        {
+            Button btn = ((Button)sender);
+            TextBox textb = ((TextBox)btn.Tag);
+            textb.Text = "";
+            Hotkey hk = (Hotkey)textb.Tag;
+            hk.keys = null;
+            textb.Tag = hk;
         }
 
         private void HotkeyBox_KeyDown(object sender, KeyEventArgs e)

@@ -146,6 +146,7 @@ namespace Dust.Expandable
                     {
                         if (checkMatch(pressedKeys, hk))
                         {
+                            Console.WriteLine(hk.name);
                             myForm.Invoke(hk.action);
                             if (hk.sleep > sleep) sleep = hk.sleep;
                         }

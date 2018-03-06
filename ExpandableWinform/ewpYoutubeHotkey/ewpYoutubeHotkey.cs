@@ -30,6 +30,7 @@ namespace ewpYoutubeHotkey
         string lastUrl;
         bool isVideoPage;
         bool documentCompleted;
+        bool loop;
         double volume, maxVolume = 1;
 
         [DllImport("user32.dll")]
@@ -69,18 +70,20 @@ namespace ewpYoutubeHotkey
         {
             return new Hotkey[]
             {
+                new Hotkey("Toggle Play/Pause", "toggle", new WKeys[] { WKeys.Z, WKeys.Q }, new HotkeyAction(togglePlayPause), 0, false),
                 new Hotkey("Play", "play", new WKeys[] { WKeys.Z, WKeys.X }, new HotkeyAction(play), 0, false),
                 new Hotkey("Pause", "pause", new WKeys[] { WKeys.Z, WKeys.C }, new HotkeyAction(pause), 0, false),
                 new Hotkey("Next", "next", new WKeys[] { WKeys.Z, WKeys.W }, new HotkeyAction(next), 0, false),
                 new Hotkey("Previous", "previous", new WKeys[] { WKeys.Z, WKeys.E }, new HotkeyAction(back), 0, false),
-                new Hotkey("Volume Up", "volup", new WKeys[] { WKeys.X, WKeys.C }, new HotkeyAction(addVolume), 0, false),
-                new Hotkey("Volume Down", "voldown", new WKeys[] { WKeys.X, WKeys.V }, new HotkeyAction(reduceVolume), 0, false)
+                new Hotkey("Volume Up", "volup", new WKeys[] { WKeys.X, WKeys.C }, new HotkeyAction(addVolume), 100, true),
+                new Hotkey("Volume Down", "voldown", new WKeys[] { WKeys.X, WKeys.V }, new HotkeyAction(reduceVolume), 100, true),
+                new Hotkey("Loop", "loop", new WKeys[] { WKeys.Z, WKeys.R }, new HotkeyAction(clickLoop), 0, false)
             };
         }
 
         Config myConfig;
         private class Config : IConfig
-        {            
+        {
             //[NonSettable]
             [Description("str_home")]
             public string home = "https://www.youtube.com";
@@ -102,6 +105,7 @@ namespace ewpYoutubeHotkey
         {
             return new Dictionary<string, string>
             {
+                {"str_toggle", "Toggle Play/Pause" },
                 {"str_play", "Play" },
                 {"str_pause", "Pause" },
                 {"str_next", "Next" },
@@ -111,6 +115,7 @@ namespace ewpYoutubeHotkey
                 {"str_home", "Homepage" },
                 {"str_volume", "Video volume" },
                 {"str_skip_ad", "Auto skip ads" },
+                {"str_loop", "Loop" }
             };
         }
 
@@ -129,6 +134,30 @@ namespace ewpYoutubeHotkey
                 "var mplayer = document.getElementsByTagName(\"video\");" +
                 "var iplayer = mplayer[0];" +
                 "iplayer.pause();";
+            javaScriptExecutor.ExecuteScript(script);
+        }
+
+
+        private bool isPlaying()
+        {
+            string script =
+                "var mplayer = document.getElementsByTagName(\"video\");" +
+                "var iplayer = mplayer[0];" +
+                "return iplayer.paused;";
+            bool paused = Convert.ToBoolean(javaScriptExecutor.ExecuteScript(script));
+            return !paused;
+        }
+
+        private void togglePlayPause()
+        {
+            string script =
+                "var mplayer = document.getElementsByTagName(\"video\");" +
+                "var iplayer = mplayer[0];" +
+                "if (iplayer.paused) {" +
+                "iplayer.play();" +
+                "} else {" +
+                "iplayer.pause();" +
+                "}";
             javaScriptExecutor.ExecuteScript(script);
         }
 
@@ -255,7 +284,7 @@ namespace ewpYoutubeHotkey
         }
 
         private void Timer_Tick(object sender, EventArgs e)
-        {            
+        {
             string currentUrl = webDriver.Url;
             if (lastUrl != currentUrl)
             {
@@ -268,11 +297,11 @@ namespace ewpYoutubeHotkey
                 {
                     waiter.Until(w => javaScriptExecutor.ExecuteScript(
                         "return document.readyState").ToString() == "complete");
-                    Console.WriteLine("Document Completed");                    
+                    Console.WriteLine("Document Completed");
                     onDocumentCompleted(currentUrl);
                     documentCompleted = true;
                 }
-                catch (WebDriverTimeoutException) { }                
+                catch (WebDriverTimeoutException) { }
             }
         }
 
@@ -288,12 +317,44 @@ namespace ewpYoutubeHotkey
             {
                 maxVolume = getMaxVolume();
                 Console.WriteLine("maxVolume = " + maxVolume);
-                
+
                 if (myConfig.skipAd) skipAd();
 
                 getVolume();
+
+                //先讓右鍵選單顯示一次，之後才能抓到循環撥放按鍵
+                showContextMenu();
+                //按下空白處關閉右鍵選單
+                clickEmpty();
+
+                if (isLoop() != loop) clickLoop();
                 //setVolume(myConfig.volume * maxVolume);
-            }            
+            }
+        }
+
+        private void showContextMenu()
+        {
+            string script =
+                "var element = document.getElementById('movie_player');" +
+                "if (window.CustomEvent)" +
+                "{" +
+                    "element.dispatchEvent(new CustomEvent('contextmenu'));" +
+                "}" +
+                "else if (document.createEvent)" +
+                "{" +
+                    "var ev = document.createEvent('HTMLEvents');" +
+                    "ev.initEvent('contextmenu', true, false);" +
+                    "element.dispatchEvent(ev);" +
+                "}";
+            javaScriptExecutor.ExecuteScript(script);
+        }
+
+        private void clickEmpty()
+        {
+            string script =
+                "var b = document.getElementsByTagName('body')[0];" +
+                "b.click();";
+            javaScriptExecutor.ExecuteScript(script);
         }
 
         private double getMaxVolume()
@@ -374,6 +435,30 @@ namespace ewpYoutubeHotkey
                     "}" +
                     "setTimeout(checkAd, 1000);";
             javaScriptExecutor.ExecuteScript(script);
+        }
+
+        private bool isLoop()
+        {
+            string script =
+                "var mplayer = document.getElementsByTagName(\"video\");" +
+                "var iplayer = mplayer[0];" +
+                "return iplayer.loop;";
+            return Convert.ToBoolean(javaScriptExecutor.ExecuteScript(script));
+        }
+
+        private void clickLoop()
+        {
+            string script =
+                "var menu = document.getElementsByClassName(\"ytp-panel-menu\")[1];" +
+                "for(var i = 0; i < menu.childElementCount; i++) { " +
+                    "var element = menu.children[i];" +
+                    "if (element.getAttribute(\"role\") === \"menuitemcheckbox\")" +
+                    "{" +
+                        "element.click();" +
+                    "}" +
+                "}";
+            javaScriptExecutor.ExecuteScript(script);
+            loop = isLoop();
         }
 
     }

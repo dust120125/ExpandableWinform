@@ -93,8 +93,8 @@ namespace ExpandableWinform
             {
                 for (int i = 0; i < hks.Length; i++)
                 {
-                    HotkeyInfo hki = tmp.Hotkeys.Where(_ => _.id == hks[i].id).First();
-                    hks[i].keys = hki.keys;
+                    HotkeyInfo hki = tmp.Hotkeys.FirstOrDefault(_ => _.id == hks[i].id);
+                    if (hki.id != null) hks[i].keys = hki.keys;
                 }
             }
 
