@@ -41,21 +41,23 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(136, 363);
+            this.button1.Location = new System.Drawing.Point(130, 360);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 1;
             this.button1.Text = "Saved";
             this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(217, 363);
+            this.button2.Location = new System.Drawing.Point(211, 360);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(75, 23);
             this.button2.TabIndex = 1;
             this.button2.Text = "Quit";
             this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // tabControl1
             // 
@@ -64,7 +66,7 @@
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(298, 357);
+            this.tabControl1.Size = new System.Drawing.Size(298, 354);
             this.tabControl1.TabIndex = 5;
             // 
             // tabPage1
@@ -75,7 +77,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(290, 331);
+            this.tabPage1.Size = new System.Drawing.Size(290, 328);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "General";
             this.tabPage1.UseVisualStyleBackColor = true;

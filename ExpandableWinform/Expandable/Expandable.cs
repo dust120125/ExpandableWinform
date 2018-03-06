@@ -25,12 +25,16 @@ namespace Dust.Expandable
             public object value;
         }
 
+        public Dictionary<string, string> strRes { get; private set; }
+
         public interface IConfig { }
 
         protected Form _form { get; private set; }
         public Panel mainPanel { get; private set;}
 
         public string dllFileName;
+
+        public bool isConfigChanged;
 
         public Hotkey[] hotkeys { get; protected set; }
 
@@ -44,6 +48,15 @@ namespace Dust.Expandable
             _form = form;
             hotkeys = createHotkeys();
             config = createConfig();
+            strRes = createStrRes();
+        }
+
+        public void editHotkey(string id, Keys[] keys)
+        {
+            for (int i = 0; i < hotkeys.Length; i++) {
+                if (hotkeys[i].id == id)
+                    hotkeys[i].keys = keys;
+            }
         }
 
         public abstract void run();
@@ -53,6 +66,8 @@ namespace Dust.Expandable
         protected abstract Hotkey[] createHotkeys();
 
         protected abstract IConfig createConfig();
+
+        protected abstract Dictionary<string, string> createStrRes();
     }
 
     public delegate void HotkeyAction();
@@ -89,6 +104,7 @@ namespace Dust.Expandable
         private Keys[] allKeys;
         private Dictionary<string, Hotkey[]> hotkeys;
         private Dictionary<string, Hotkey[]> retriggerableHotkeys;
+        
         private List<Keys> lastKeys;
 
         public GlobalHotkey(Form form)
@@ -157,7 +173,7 @@ namespace Dust.Expandable
             }            
         }
 
-        private List<Keys> getPressedKeys()
+        public List<Keys> getPressedKeys()
         {
             List<Keys> pressedKeys = new List<Keys>();
             foreach(Keys k in allKeys)

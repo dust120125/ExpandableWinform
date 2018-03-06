@@ -17,6 +17,7 @@ namespace ExpandableWinform
 
         public static List<Expandable> loadedModules = new List<Expandable>();
         public static Dictionary<string, Hotkey[]> Hotkeys = new Dictionary<string, Hotkey[]>();
+        public static GlobalHotkey globalHotkey;
 
         [Serializable]        
         public struct HotkeyInfo
@@ -44,10 +45,12 @@ namespace ExpandableWinform
             public List<HotkeyInfo> Hotkeys;
         }        
 
-        public static void saveConfig(string module, Expandable.IConfig config, Hotkey[] hks)
+        public static void saveConfig(Expandable exa, Expandable.IConfig config, Hotkey[] hks)
         {
+            if (!exa.isConfigChanged) return;
             if (!Directory.Exists(CONFIG_PATH)) Directory.CreateDirectory(CONFIG_PATH);
 
+            string module = exa.dllFileName;
             List<Expandable.Property> property = convertConfig(config);
             List<HotkeyInfo> hotkeyInfos = getHotkeyInfo(hks);
             Config targetConfig = new Config(property, hotkeyInfos);

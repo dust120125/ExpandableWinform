@@ -80,15 +80,38 @@ namespace ewpYoutubeHotkey
 
         Config myConfig;
         private class Config : IConfig
-        {
+        {            
+            //[NonSettable]
+            [Description("str_home")]
             public string home = "https://www.youtube.com";
+
+            [Description("str_volume")]
+            [NumericOption(1.0, 0, 0.1, 3)]
             public double volume = 0.5;
+
+            [Description("str_skip_ad")]
             public bool skipAd = true;
         }
         protected override IConfig createConfig()
         {
             myConfig = new Config();
             return myConfig;
+        }
+
+        protected override Dictionary<string, string> createStrRes()
+        {
+            return new Dictionary<string, string>
+            {
+                {"str_play", "Play" },
+                {"str_pause", "Pause" },
+                {"str_next", "Next" },
+                {"str_previous", "Previous" },
+                {"str_volup", "Volume up" },
+                {"str_voldown", "Volume down" },
+                {"str_home", "Homepage" },
+                {"str_volume", "Video volume" },
+                {"str_skip_ad", "Auto skip ads" },
+            };
         }
 
         private void play()

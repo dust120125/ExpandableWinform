@@ -33,8 +33,10 @@
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.hotkeysToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.optionToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.mainPanel = new System.Windows.Forms.Panel();
             this.tabControl = new System.Windows.Forms.TabControl();
+            this.modulesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.mainPanel.SuspendLayout();
             this.SuspendLayout();
@@ -43,7 +45,8 @@
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.optionToolStripMenuItem});
+            this.optionToolStripMenuItem,
+            this.modulesToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(619, 24);
@@ -67,7 +70,8 @@
             // optionToolStripMenuItem
             // 
             this.optionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.hotkeysToolStripMenuItem});
+            this.hotkeysToolStripMenuItem,
+            this.optionToolStripMenuItem1});
             this.optionToolStripMenuItem.Name = "optionToolStripMenuItem";
             this.optionToolStripMenuItem.Size = new System.Drawing.Size(59, 20);
             this.optionToolStripMenuItem.Text = "Option";
@@ -78,6 +82,13 @@
             this.hotkeysToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.hotkeysToolStripMenuItem.Text = "Hotkeys";
             this.hotkeysToolStripMenuItem.Click += new System.EventHandler(this.hotkeysToolStripMenuItem_Click);
+            // 
+            // optionToolStripMenuItem1
+            // 
+            this.optionToolStripMenuItem1.Name = "optionToolStripMenuItem1";
+            this.optionToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
+            this.optionToolStripMenuItem1.Text = "Option";
+            this.optionToolStripMenuItem1.Click += new System.EventHandler(this.optionToolStripMenuItem1_Click);
             // 
             // mainPanel
             // 
@@ -96,6 +107,12 @@
             this.tabControl.SelectedIndex = 0;
             this.tabControl.Size = new System.Drawing.Size(619, 501);
             this.tabControl.TabIndex = 0;
+            // 
+            // modulesToolStripMenuItem
+            // 
+            this.modulesToolStripMenuItem.Name = "modulesToolStripMenuItem";
+            this.modulesToolStripMenuItem.Size = new System.Drawing.Size(69, 20);
+            this.modulesToolStripMenuItem.Text = "Modules";
             // 
             // Form1
             // 
@@ -127,6 +144,8 @@
         private System.Windows.Forms.TabControl tabControl;
         private System.Windows.Forms.ToolStripMenuItem optionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem hotkeysToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem optionToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem modulesToolStripMenuItem;
     }
 }
 
