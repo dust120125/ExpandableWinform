@@ -7,11 +7,15 @@ using Dust.Expandable;
 
 namespace TestLib
 {
-    public class TestPlugin : Expandable
+    public class ewpTestPlugin : Expandable
     {
+        public ewpTestPlugin(Form form) : base(form)
+        {
+        }
+
         public override void run()
         {
-            MessageBox.Show("Loaded");
+            //MessageBox.Show("Loaded");
         }
 
         public override void quit()
@@ -19,5 +23,34 @@ namespace TestLib
             
         }
 
+        public override string getTitle()
+        {
+            return "Test";
+        }
+
+        protected override Hotkey[] createHotkeys()
+        {
+            return null;
+        }
+
+        protected override IConfig createConfig()
+        {
+            return null;
+        }
+
+        protected override MenuStruct[] createMenuStructs()
+        {
+            return null;
+        }
+
+        protected override Dictionary<string, string> createStrRes()
+        {
+            return null;
+        }
+
+        protected override Dictionary<string, string[]> createComboBoxItemRes()
+        {
+            return null;
+        }
     }
 }

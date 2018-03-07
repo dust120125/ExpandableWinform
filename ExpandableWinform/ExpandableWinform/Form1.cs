@@ -16,24 +16,32 @@ namespace ExpandableWinform
 {
     public partial class Form1 : Form
     {
-        const string modulePath = ".\\modules\\";        
+        const string modulePath = ".\\modules\\";
+        bool quitting;
+
+        private static Core _Core;
 
         public Form1()
         {
-            InitializeComponent();            
+            InitializeComponent();
+            _Core = Core.getInstance(this, tabControl);
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            Setting.globalHotkey = new GlobalHotkey(this);            
+            Core.loadedModules.Add(_Core);
+            Core.globalHotkey = new GlobalHotkey(this);
+            
             loadModuleFiles();
+            notifyIcon1.Visible = true;
+            notifyIcon1.ShowBalloonTip(500);
         }        
 
         private void Form1_Shown(object sender, EventArgs e)
         {
-            foreach (Expandable exa in Setting.loadedModules)
+            foreach (Expandable exa in Core.loadedModules)
             {                
-                if (!Setting.loadConfig(exa.dllFileName, exa.config, exa.hotkeys))
+                if (!Core.loadConfig(exa.dllFileName, exa.config, exa.hotkeys))
                 {
                     //強制產生設定檔
                     exa.isConfigChanged = true;
@@ -42,21 +50,36 @@ namespace ExpandableWinform
                 Hotkey[] hks = exa.hotkeys;
                 if (hks != null)
                 {
-                    Setting.Hotkeys.Add(exa.dllFileName, hks);
-                    Setting.globalHotkey.setHotkeys(exa.dllFileName, hks);
+                    Core.reloadHotkeys(exa.dllFileName, hks);
                 }
             }
-            Setting.globalHotkey.start();
+            Core.globalHotkey.start();
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Setting.globalHotkey.stop();
-            foreach (Expandable exa in Setting.loadedModules)
+            if (!Core.setting.hideWhenClose)
+            {
+                Quit();
+                return;
+            }
+
+            if (!quitting)
+            {
+                this.Hide();
+                e.Cancel = true;
+            }
+            else Quit();
+        }
+
+        private void Quit()
+        {
+            Core.globalHotkey.stop();
+            foreach (Expandable exa in Core.loadedModules)
             {
                 exa.quit();
-                Setting.saveConfig(exa, exa.config, exa.hotkeys);
-            }            
+                Core.saveConfig(exa, exa.config, exa.hotkeys);
+            }
         }
 
         private void loadModuleFiles()
@@ -70,6 +93,8 @@ namespace ExpandableWinform
             string[] files = Directory.GetFiles(modulePath);
             string[] modules = Directory.GetFiles(modulePath).Where(
                 s => s.StartsWith(modulePath + "ewp") && s.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToArray();
+
+            List<Expandable> loadedModules = new List<Expandable>();
             foreach(string f in modules)
             {                
                 Assembly dll = Assembly.LoadFrom(f);
@@ -77,8 +102,9 @@ namespace ExpandableWinform
 
                 Expandable exa = (Expandable)Activator.CreateInstance(t, this);
                 exa.dllFileName = f.Substring(modulePath.Length, f.Length - modulePath.Length - 4);
-                Setting.loadedModules.Add(exa);
+                Core.loadedModules.Add(exa);
 
+                loadMenuStripItems(exa);
                 ToolStripMenuItem toolStripMenuItem = new ToolStripMenuItem()
                 {
                     Text = exa.getTitle(),
@@ -89,6 +115,13 @@ namespace ExpandableWinform
 
                 modulesToolStripMenuItem.DropDown.Items.Add(toolStripMenuItem);
 
+                loadedModules.Add(exa);
+            }
+
+            _Core.addSwitchPageHotkey(loadedModules.ToArray());
+
+            foreach(Expandable exa in loadedModules)
+            {
                 loadModule(exa);
             }
         }
@@ -113,6 +146,76 @@ namespace ExpandableWinform
             item.Checked = true;
         }
 
+        private void loadMenuStripItems(Expandable exa)
+        {
+            MenuStruct[] menuStructs = exa.menuStructs;
+            if (menuStructs == null) return;
+            foreach(MenuStruct ms in menuStructs)
+            {
+                ToolStripMenuItem menuItem = createMenuItem(exa, ms);
+                addMenuItem(ms.field, menuItem);
+            }
+        }
+
+        private void addMenuItem(MenuStripField field, ToolStripMenuItem item)
+        {
+            IEnumerable<ToolStripMenuItem> menuItems = MainMenuStrip.Items.Cast<ToolStripMenuItem>();
+            ToolStripMenuItem menu;
+
+            switch (field)
+            {
+                case MenuStripField.File:
+                    menu = menuItems.Where(_ => _.Text == "File").First();
+                    menu.DropDownItems.Insert(0, item);
+                    break;
+                case MenuStripField.View:
+                    menu = menuItems.Where(_ => _.Text == "View").First();
+                    menu.DropDownItems.Insert(0, item);
+                    break;
+                case MenuStripField.Tool:
+                    menu = menuItems.Where(_ => _.Text == "Tool").First();
+                    menu.DropDownItems.Insert(0, item);
+                    break;
+                case MenuStripField.Option:
+                    menu = menuItems.Where(_ => _.Text == "Option").First();
+                    menu.DropDownItems.Insert(0, item);
+                    break;
+                case MenuStripField.Others:
+                default:
+                    menu = menuItems.Where(_ => _.Text == "Others").First();
+                    menu.DropDownItems.Insert(0, item);
+                    break;
+            }
+            menu.Visible = true;
+            
+        }
+
+        private ToolStripMenuItem createMenuItem(Expandable exa, MenuStruct menuStruct)
+        {
+            ToolStripMenuItem menuItem = new ToolStripMenuItem();
+            exa.strRes.TryGetValue("str_" + menuStruct.id, out string name);
+            menuItem.Text = name != null ? name : menuStruct.name;
+            menuItem.Name = exa.dllFileName + menuStruct.id;
+            menuItem.AutoSize = true;
+
+            if (menuStruct.action != null)
+            {
+                menuItem.Click += menuStruct.action;
+            }
+
+            if(menuStruct.dropDownItems != null)
+            {
+                List<ToolStripMenuItem> items = new List<ToolStripMenuItem>();
+                foreach(MenuStruct ms in menuStruct.dropDownItems)
+                {
+                    items.Add(createMenuItem(exa, ms));
+                }
+                menuItem.DropDownItems.AddRange(items.ToArray());
+            }
+
+            return menuItem;
+        }
+
         private void ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ToolStripMenuItem item = (ToolStripMenuItem)sender;
@@ -124,7 +227,7 @@ namespace ExpandableWinform
                 IEnumerable<Control> ien = tabControl.Controls.Cast<Control>();
                 TabPage page = (TabPage)ien.Where(_ => type.Equals(_.Tag)).First();
 
-                Setting.saveConfig(exa, exa.config, exa.hotkeys);
+                Core.saveConfig(exa, exa.config, exa.hotkeys);
                 tabControl.Controls.Remove(page);                
                 exa.quit();
 
@@ -145,6 +248,17 @@ namespace ExpandableWinform
         private void optionToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             new Form_Settings().Show();
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            quitting = true;
+            Close();
+        }
+
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            Show();
         }
     }
 }

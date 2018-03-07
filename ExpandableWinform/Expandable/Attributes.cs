@@ -54,4 +54,16 @@ namespace Dust.Expandable
             this.decimalPlaces = decimalPlaces;
         }
     }
+
+    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
+    public sealed class ComboBoxOption : Attribute
+    {
+
+        public readonly string key;
+
+        public ComboBoxOption(string key)
+        {
+            this.key = key;
+        }        
+    }
 }

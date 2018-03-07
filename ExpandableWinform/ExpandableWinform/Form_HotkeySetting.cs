@@ -22,53 +22,21 @@ namespace ExpandableWinform
             stringBuilder = new StringBuilder();
             InitPages();
         }
-
-        private void InitGeneralPage()
-        {
-            for (int i = 0; i < Setting.loadedModules.Count; i++)
-            {
-                TextBox tb = new TextBox();
-                tb.Anchor = (AnchorStyles.Top | AnchorStyles.Right);
-                tb.Location = new Point(101, 34 + i * 28);
-                tb.Size = new Size(155, 22);
-                //tb.TabIndex = i * 2;
-                tb.Tag = Setting.loadedModules[i];
-
-                Button bt = new Button();
-                bt.Anchor = (AnchorStyles.Top | AnchorStyles.Right);
-                bt.Location = new Point(262, 34 + i * 28);
-                bt.Size = new Size(22, 22);
-                //bt.TabIndex = i * 2 + 1;
-                bt.Text = "☓";
-                bt.UseVisualStyleBackColor = true;
-
-                Label lab = new Label();
-                lab.AutoSize = true;
-                lab.Location = new Point(8, 39 + i * 28);
-                lab.Size = new Size(33, 12);
-                lab.Text = Setting.loadedModules[i].getTitle();
-
-                tabPage1.Controls.Add(tb);
-                tabPage1.Controls.Add(bt);
-                tabPage1.Controls.Add(lab);
-
-            }
-        }
-
+        
         private void InitPages()
         {
-            InitGeneralPage();
-
-            foreach (string module in Setting.Hotkeys.Keys)
+            foreach (string module in Core.ModuleHotkeys.Keys)
             {
-                Expandable exa = Setting.loadedModules.Where(_ => _.dllFileName == module).First();
-                Hotkey[] hks = Setting.Hotkeys[module];
+                Expandable exa = Core.loadedModules.Where(_ => _.dllFileName == module).First();
+                Hotkey[] hks = Core.ModuleHotkeys[module];
                 if (hks == null || hks.Length == 0) continue;
+
+                string text = module == Core.CORE_ID ? "General" : exa.getTitle();
 
                 Hotkey[] tmpHks = hks.ToArray();
                 TabPage page = new TabPage
                 {
-                    Text = exa.getTitle(),
+                    Text = text,
                     AutoScroll = true,
                     Location = new Point(4, 22),
                     Padding = new Padding(3),
@@ -142,7 +110,7 @@ namespace ExpandableWinform
         {
             e.Handled = true;
             e.SuppressKeyPress = true;
-            List<Keys> pressedKeys = Setting.globalHotkey.getPressedKeys();
+            List<Keys> pressedKeys = Core.globalHotkey.getPressedKeys();
             TextBox textb = ((TextBox)sender);
             textb.Text = getHotKeyString(pressedKeys);
             Hotkey hk = (Hotkey)textb.Tag;
@@ -166,8 +134,8 @@ namespace ExpandableWinform
                     Hotkey hk = (Hotkey)tb.Tag;
                     exa.editHotkey(hk.id, hk.keys);
                 }
-                Setting.Hotkeys[exa.dllFileName] = exa.hotkeys;
-                Setting.globalHotkey.setHotkeys(exa.dllFileName, exa.hotkeys);
+                Core.ModuleHotkeys[exa.dllFileName] = exa.hotkeys;
+                Core.globalHotkey.setHotkeys(exa.dllFileName, exa.hotkeys);
             }
         }
 

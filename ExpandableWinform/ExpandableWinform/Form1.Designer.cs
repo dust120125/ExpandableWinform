@@ -28,15 +28,21 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.hotkeysToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.modulesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.othersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mainPanel = new System.Windows.Forms.Panel();
             this.tabControl = new System.Windows.Forms.TabControl();
-            this.modulesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.menuStrip1.SuspendLayout();
             this.mainPanel.SuspendLayout();
             this.SuspendLayout();
@@ -45,8 +51,11 @@
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
+            this.viewToolStripMenuItem,
+            this.toolToolStripMenuItem,
             this.optionToolStripMenuItem,
-            this.modulesToolStripMenuItem});
+            this.modulesToolStripMenuItem,
+            this.othersToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(619, 24);
@@ -64,8 +73,23 @@
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(94, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.exitToolStripMenuItem.Text = "Exit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            // 
+            // viewToolStripMenuItem
+            // 
+            this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+            this.viewToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
+            this.viewToolStripMenuItem.Text = "View";
+            this.viewToolStripMenuItem.Visible = false;
+            // 
+            // toolToolStripMenuItem
+            // 
+            this.toolToolStripMenuItem.Name = "toolToolStripMenuItem";
+            this.toolToolStripMenuItem.Size = new System.Drawing.Size(45, 20);
+            this.toolToolStripMenuItem.Text = "Tool";
+            this.toolToolStripMenuItem.Visible = false;
             // 
             // optionToolStripMenuItem
             // 
@@ -79,16 +103,29 @@
             // hotkeysToolStripMenuItem
             // 
             this.hotkeysToolStripMenuItem.Name = "hotkeysToolStripMenuItem";
-            this.hotkeysToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.hotkeysToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
             this.hotkeysToolStripMenuItem.Text = "Hotkeys";
             this.hotkeysToolStripMenuItem.Click += new System.EventHandler(this.hotkeysToolStripMenuItem_Click);
             // 
             // optionToolStripMenuItem1
             // 
             this.optionToolStripMenuItem1.Name = "optionToolStripMenuItem1";
-            this.optionToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
+            this.optionToolStripMenuItem1.Size = new System.Drawing.Size(119, 22);
             this.optionToolStripMenuItem1.Text = "Option";
             this.optionToolStripMenuItem1.Click += new System.EventHandler(this.optionToolStripMenuItem1_Click);
+            // 
+            // modulesToolStripMenuItem
+            // 
+            this.modulesToolStripMenuItem.Name = "modulesToolStripMenuItem";
+            this.modulesToolStripMenuItem.Size = new System.Drawing.Size(69, 20);
+            this.modulesToolStripMenuItem.Text = "Modules";
+            // 
+            // othersToolStripMenuItem
+            // 
+            this.othersToolStripMenuItem.Name = "othersToolStripMenuItem";
+            this.othersToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
+            this.othersToolStripMenuItem.Text = "Others";
+            this.othersToolStripMenuItem.Visible = false;
             // 
             // mainPanel
             // 
@@ -108,11 +145,14 @@
             this.tabControl.Size = new System.Drawing.Size(619, 501);
             this.tabControl.TabIndex = 0;
             // 
-            // modulesToolStripMenuItem
+            // notifyIcon1
             // 
-            this.modulesToolStripMenuItem.Name = "modulesToolStripMenuItem";
-            this.modulesToolStripMenuItem.Size = new System.Drawing.Size(69, 20);
-            this.modulesToolStripMenuItem.Text = "Modules";
+            this.notifyIcon1.BalloonTipText = "MWinTool is running";
+            this.notifyIcon1.BalloonTipTitle = "MWinTool";
+            this.notifyIcon1.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon1.Icon")));
+            this.notifyIcon1.Text = "MWinTool";
+            this.notifyIcon1.Visible = true;
+            this.notifyIcon1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
             // 
             // Form1
             // 
@@ -121,9 +161,10 @@
             this.ClientSize = new System.Drawing.Size(619, 525);
             this.Controls.Add(this.mainPanel);
             this.Controls.Add(this.menuStrip1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "MWinTool";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.Shown += new System.EventHandler(this.Form1_Shown);
@@ -140,12 +181,16 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toolToolStripMenuItem;
         private System.Windows.Forms.Panel mainPanel;
         private System.Windows.Forms.TabControl tabControl;
         private System.Windows.Forms.ToolStripMenuItem optionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem hotkeysToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem optionToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem modulesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem othersToolStripMenuItem;
+        private System.Windows.Forms.NotifyIcon notifyIcon1;
     }
 }
 

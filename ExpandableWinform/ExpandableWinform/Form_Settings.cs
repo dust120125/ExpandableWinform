@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Reflection;
 
 using Dust.Expandable;
+using System.Collections;
 
 namespace ExpandableWinform
 {
@@ -27,15 +28,18 @@ namespace ExpandableWinform
 
         private void InitPages()
         {
-            foreach (Expandable exa in Setting.loadedModules)
+            foreach (Expandable exa in Core.loadedModules)
             {
-                string module = exa.dllFileName;
                 Expandable.IConfig config = exa.config;
+                if (config == null) continue;
+
+                string module = exa.dllFileName;
+                string text = module == Core.CORE_ID ? "General" : exa.getTitle();                
                 Dictionary<string, string> strRes = exa.strRes;
 
                 TabPage page = new TabPage
                 {
-                    Text = exa.getTitle(),
+                    Text = text,
                     AutoScroll = true,
                     Location = new Point(4, 22),
                     Padding = new Padding(3),
@@ -52,7 +56,7 @@ namespace ExpandableWinform
                 foreach (FieldInfo fi in fields)
                 {
                     dynamic value = Convert.ChangeType(fi.GetValue(config), fi.FieldType);
-                    Control control = createControl(ref index, page, fi, strRes, value);
+                    Control control = createControl(ref index, page, fi, exa, value);
                     if (control == null) continue;
                     controls.Add(control);
                 }
@@ -64,10 +68,15 @@ namespace ExpandableWinform
 
         int valueBox_x = 135;
         private Control createControl
-            (ref int index, TabPage page, FieldInfo field, Dictionary<string, string> strRes, dynamic value)
+            (ref int index, TabPage page, FieldInfo field, Expandable exa, dynamic value)
         {
+            Dictionary<string, string> strRes = exa.strRes;
+            Dictionary<string, string[]> comboBoxRes = exa.comboBoxItemRes;
+
             string desc = field.Name;
             Type type = field.FieldType;
+
+            string[] comboBoxItems = null;
             decimal maximun = 100, minimun = 0, increment = 1;
             int decimalPlaces = 0;
 
@@ -90,6 +99,13 @@ namespace ExpandableWinform
                 decimalPlaces = attr.decimalPlaces;
             }
 
+            oAttr = field.GetCustomAttributes(typeof(ComboBoxOption), false);
+            if (oAttr.Length != 0)
+            {
+                ComboBoxOption attr = (ComboBoxOption)oAttr[0];
+                comboBoxItems = comboBoxRes[attr.key];
+            }
+
             Label lab = new Label
             {
                 AutoSize = true,
@@ -98,7 +114,20 @@ namespace ExpandableWinform
             };
 
             Control control = null;
-            if (type.Equals(typeof(string)))
+            if (type.Equals(typeof(string)) && comboBoxItems != null)
+            {
+                ComboBox tmp = new ComboBox
+                {
+                    Anchor = (AnchorStyles.Top | AnchorStyles.Right),
+                    Text = value,
+                    Location = new Point(valueBox_x, 6 + index * 28),
+                    Size = new Size(150, 22),
+                };
+                tmp.Items.AddRange(comboBoxItems);
+                control = tmp;
+                lab.Location = new Point(8, 6 + index * 28 + 3);
+            }
+            else if (type.Equals(typeof(string)))
             {
                 control = new TextBox
                 {
@@ -176,7 +205,7 @@ namespace ExpandableWinform
 
                 if (type.Equals(typeof(string)))
                 {
-                    value = ((TextBox)control).Text;
+                    value = control.Text;
                 }
                 else if (type.Equals(typeof(bool)))
                 {

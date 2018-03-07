@@ -27,6 +27,8 @@ namespace Dust.Expandable
 
         public Dictionary<string, string> strRes { get; private set; }
 
+        public Dictionary<string, string[]> comboBoxItemRes { get; private set; }
+
         public interface IConfig { }
 
         protected Form _form { get; private set; }
@@ -37,6 +39,8 @@ namespace Dust.Expandable
         public bool isConfigChanged;
 
         public Hotkey[] hotkeys { get; protected set; }
+
+        public MenuStruct[] menuStructs { get; protected set; }
 
         public IConfig config { get; protected set; }
 
@@ -49,6 +53,8 @@ namespace Dust.Expandable
             hotkeys = createHotkeys();
             config = createConfig();
             strRes = createStrRes();
+            menuStructs = createMenuStructs();
+            comboBoxItemRes = createComboBoxItemRes();
         }
 
         public void editHotkey(string id, Keys[] keys)
@@ -67,19 +73,24 @@ namespace Dust.Expandable
 
         protected abstract IConfig createConfig();
 
+        protected abstract MenuStruct[] createMenuStructs();
+
         protected abstract Dictionary<string, string> createStrRes();
+
+        protected abstract Dictionary<string, string[]> createComboBoxItemRes();
     }
 
-    public delegate void HotkeyAction();
+    public delegate void HotkeyAction(params object[] args);
     
     public struct Hotkey
     {
-        public Hotkey(string name, string id, Keys[] keys, HotkeyAction action, int sleep, bool retriggerable)
+        public Hotkey(string name, string id, Keys[] keys, HotkeyAction action, int sleep, bool retriggerable, params object[] args)
         {
             this.name = name;
             this.id = id;
             this.keys = keys;
             this.action = action;
+            this.args = args;
             this.sleep = sleep;
             this.retriggerable = retriggerable;
         }
@@ -87,8 +98,58 @@ namespace Dust.Expandable
         public string id { get; private set; }
         public Keys[] keys;
         public HotkeyAction action { get; private set; }
+        public object[] args { get; private set; }
         public bool retriggerable { get; private set; }
         public int sleep { get; private set; }
+    }
+
+    public enum MenuStripField
+    {
+        File, View, Tool, Option, Others
+    }    
+
+    public struct MenuStruct
+    {
+        public MenuStruct(string name, string id) : this()
+        {
+            this.name = name;
+            this.id = id;
+        }
+
+        public MenuStruct(MenuStripField field, string name, string id) : this()
+        {
+            this.field = field;
+            this.name = name;
+            this.id = id;
+        }
+
+        public MenuStruct(string name, string id, EventHandler action) : this(name, id)
+        {
+            this.action = action;
+        }
+
+        public MenuStruct(MenuStripField field, string name, string id, EventHandler action) : this(field, name, id)
+        {
+            this.action = action;
+        }
+
+        public MenuStruct(string name, string id, EventHandler action,
+            List<MenuStruct> dropDownItems) : this(name, id, action)
+        {
+            this.dropDownItems = dropDownItems;
+        }
+
+        public MenuStruct(MenuStripField field, string name,
+            string id, EventHandler action, List<MenuStruct> dropDownItems) : this(field, name, id, action)
+        {
+            this.dropDownItems = dropDownItems;
+        }
+
+        public MenuStripField field { get; private set; }
+        public string name { get; private set; }
+        public string id { get; private set; }
+        public EventHandler action { get; private set; }
+        public List<MenuStruct> dropDownItems { get; private set; }
     }
 
     public class GlobalHotkey
@@ -162,7 +223,7 @@ namespace Dust.Expandable
                         {
                             if (checkMatch(pressedKeys, hk))
                             {
-                                myForm.Invoke(hk.action);
+                                myForm.Invoke(hk.action, new[] { hk.args });
                                 if (hk.sleep > sleep) sleep = hk.sleep;
                             }
                         }

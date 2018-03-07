@@ -95,6 +95,7 @@ namespace ewpYoutubeHotkey
             [Description("str_skip_ad")]
             public bool skipAd = true;
         }
+
         protected override IConfig createConfig()
         {
             myConfig = new Config();
@@ -119,7 +120,24 @@ namespace ewpYoutubeHotkey
             };
         }
 
-        private void play()
+        protected override Dictionary<string, string[]> createComboBoxItemRes()
+        {
+            return null;
+        }
+
+        protected override MenuStruct[] createMenuStructs()
+        {
+            return new MenuStruct[]{
+                new MenuStruct(MenuStripField.File, "Go url", "gurl", showUrlDialog)
+            };
+        }
+
+        private void showUrlDialog(object sender, EventArgs e)
+        {
+            Console.WriteLine("Show Dialog");
+        }
+
+        private void play(params object[] args)
         {
             string script =
                 "var mplayer = document.getElementsByTagName(\"video\");" +
@@ -128,7 +146,7 @@ namespace ewpYoutubeHotkey
             javaScriptExecutor.ExecuteScript(script);
         }
 
-        private void pause()
+        private void pause(params object[] args)
         {
             string script =
                 "var mplayer = document.getElementsByTagName(\"video\");" +
@@ -138,7 +156,7 @@ namespace ewpYoutubeHotkey
         }
 
 
-        private bool isPlaying()
+        private bool isPlaying(params object[] args)
         {
             string script =
                 "var mplayer = document.getElementsByTagName(\"video\");" +
@@ -148,7 +166,7 @@ namespace ewpYoutubeHotkey
             return !paused;
         }
 
-        private void togglePlayPause()
+        private void togglePlayPause(params object[] args)
         {
             string script =
                 "var mplayer = document.getElementsByTagName(\"video\");" +
@@ -161,7 +179,7 @@ namespace ewpYoutubeHotkey
             javaScriptExecutor.ExecuteScript(script);
         }
 
-        private void next()
+        private void next(params object[] args)
         {
             string script =
                 "var btm = document.getElementsByClassName(\"ytp-next-button ytp-button\")[0];" +
@@ -177,7 +195,7 @@ namespace ewpYoutubeHotkey
             }
         }
 
-        private void back()
+        private void back(params object[] args)
         {
             string script =
                 "var btm = document.getElementsByClassName(\"ytp-prev-button ytp-button\")[0];" +
@@ -404,13 +422,13 @@ namespace ewpYoutubeHotkey
             javaScriptExecutor.ExecuteScript(setVolume + "setVolume(" + vol + ");");
         }
 
-        private void addVolume()
+        private void addVolume(params object[] args)
         {
             if (isVideoPage && documentCompleted)
                 setVolume(getVolume() + maxVolume / 15);
         }
 
-        private void reduceVolume()
+        private void reduceVolume(params object[] args)
         {
             if (isVideoPage && documentCompleted)
                 setVolume(getVolume() - maxVolume / 15);
@@ -446,7 +464,7 @@ namespace ewpYoutubeHotkey
             return Convert.ToBoolean(javaScriptExecutor.ExecuteScript(script));
         }
 
-        private void clickLoop()
+        private void clickLoop(params object[] args)
         {
             string script =
                 "var menu = document.getElementsByClassName(\"ytp-panel-menu\")[1];" +
