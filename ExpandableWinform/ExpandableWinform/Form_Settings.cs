@@ -180,6 +180,7 @@ namespace ExpandableWinform
 
         private void saveSettings()
         {
+            string lang = Core.setting.language;
             foreach (TabPage page in tabControl1.TabPages)
             {
                 if (page.Tag == null) continue;                
@@ -193,6 +194,11 @@ namespace ExpandableWinform
 
                 saveSetting(controls, config);
             }
+
+            if (Core.setting.language == lang) return;
+            Core core = Core.getInstance();
+            if (core == null) return;
+            MessageBox.Show(core.getString("str_change_lang_msg"));
         }
 
         private void saveSetting(Control[] controls, Expandable.IConfig config)
@@ -214,6 +220,8 @@ namespace ExpandableWinform
                 else if (NumericTypes.Contains(type))
                 {
                     value = ((NumericUpDown)control).Value;
+                    value = Convert.ChangeType(value, type);
+                    /*
                     if (type.Equals(typeof(double)))
                     {
                         value = Convert.ToDouble(value);
@@ -222,6 +230,7 @@ namespace ExpandableWinform
                     {
                         value = Convert.ToSingle(value);
                     }
+                    */
                 }
 
                 if (value == null) return;

@@ -14,9 +14,8 @@ using Dust.Expandable;
 
 namespace ExpandableWinform
 {
-    public partial class Form1 : Form
+    public partial class Form1 : ExpandableForm
     {
-        const string modulePath = ".\\modules\\";
         bool quitting;
 
         private static Core _Core;
@@ -27,33 +26,68 @@ namespace ExpandableWinform
             _Core = Core.getInstance(this, tabControl);
         }
 
+        protected override NotifyIcon createNotifyIcon()
+        {
+            return notifyIcon1;
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
             Core.loadedModules.Add(_Core);
             Core.globalHotkey = new GlobalHotkey(this);
-            
+            Core.globalHotkey.gerenalHotkey = Core.CORE_ID;
+
+            tabControl.SelectedIndexChanged += TabControl_SelectedIndexChanged;
+
             loadModuleFiles();
-            notifyIcon1.Visible = true;
-            notifyIcon1.ShowBalloonTip(500);
-        }        
+        }
+
+        private void TabControl_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (tabControl.TabPages.Count == 0) return;
+            Expandable exa = (Expandable)tabControl.SelectedTab.Tag;
+            Core.globalHotkey.availableHotkeys = exa.dllFileName;
+        }
 
         private void Form1_Shown(object sender, EventArgs e)
         {
+            SuspendLayout();
             foreach (Expandable exa in Core.loadedModules)
-            {                
-                if (!Core.loadConfig(exa.dllFileName, exa.config, exa.hotkeys))
-                {
-                    //強制產生設定檔
-                    exa.isConfigChanged = true;
-                }
+            {
+                Expandable.Property property = Core.setting.enabledModules.FirstOrDefault(_ => _.name == exa.dllFileName);
+                if (property.name != null && !(bool)property.value) continue;
+                loadModule(exa);
+            }
 
+            switchLanguage();
+
+            foreach (Expandable exa in Core.loadedModules)
+            {
                 Hotkey[] hks = exa.hotkeys;
                 if (hks != null)
                 {
                     Core.reloadHotkeys(exa.dllFileName, hks);
                 }
             }
+
+            tabControl.SelectedIndex = 0;
+
+            ResumeLayout();
             Core.globalHotkey.start();
+        }
+
+        private void switchLanguage()
+        {
+            fileToolStripMenuItem.Text = _Core.getString("str_file");
+            viewToolStripMenuItem.Text = _Core.getString("str_view");
+            toolToolStripMenuItem.Text = _Core.getString("str_tool");
+            optionToolStripMenuItem.Text = _Core.getString("str_option");
+            modulesToolStripMenuItem.Text = _Core.getString("str_modules");
+            othersToolStripMenuItem.Text = _Core.getString("str_others");
+            exitToolStripMenuItem.Text = _Core.getString("str_exit");
+            hotkeysToolStripMenuItem.Text = _Core.getString("str_hotkeys");
+            exportstrToolStripMenuItem.Text = _Core.getString("str_export_str");
+            settingToolStripMenuItem.Text = _Core.getString("str_setting");
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -75,36 +109,61 @@ namespace ExpandableWinform
         private void Quit()
         {
             Core.globalHotkey.stop();
-            foreach (Expandable exa in Core.loadedModules)
+            try
             {
-                exa.quit();
-                Core.saveConfig(exa, exa.config, exa.hotkeys);
+                foreach (Expandable exa in Core.loadedModules)
+                {
+                    exa.quit();
+                    Core.saveConfig(exa, exa.config, exa.hotkeys);
+                }
+            }
+            catch (Exception) { }
+        }
+
+        private Assembly loadAssembly(Assembly baseAssembly, string name)
+        {
+            using (var stream = baseAssembly.GetManifestResourceStream(name))
+            {
+                var bytes = new byte[stream.Length];
+                stream.Read(bytes, 0, (int)stream.Length);
+                return Assembly.Load(bytes);
             }
         }
 
         private void loadModuleFiles()
         {
-            if (!Directory.Exists(modulePath))
+            if (!Directory.Exists(Core.modulePath))
             {
-                Directory.CreateDirectory(modulePath);
+                Directory.CreateDirectory(Core.modulePath);
                 return;
             }
 
-            string[] files = Directory.GetFiles(modulePath);
-            string[] modules = Directory.GetFiles(modulePath).Where(
-                s => s.StartsWith(modulePath + "ewp") && s.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToArray();
+            string[] files = Directory.GetFiles(Core.modulePath);
+            string[] modules = Directory.GetFiles(Core.modulePath).Where(
+                s => s.StartsWith(Core.modulePath + "ewp") && s.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)).ToArray();
 
             List<Expandable> loadedModules = new List<Expandable>();
-            foreach(string f in modules)
-            {                
-                Assembly dll = Assembly.LoadFrom(f);
-                Type t = dll.GetTypes().Where(_ => _.Name.StartsWith("ewp")).First();
+            foreach (string f in modules)
+            {
+                Assembly assembly = Assembly.LoadFrom(f);
+
+                string[] needDlls = assembly.GetManifestResourceNames().Where(_ => _.EndsWith(".dll")).ToArray();
+                foreach(string name in needDlls)
+                {
+                    Assembly tmp = loadAssembly(assembly, name);
+                    Program.loadedAssembly[tmp.FullName] = tmp;
+                }
+
+                Type t = assembly.GetTypes().Where(_ => _.Name.StartsWith("ewp")).First();
 
                 Expandable exa = (Expandable)Activator.CreateInstance(t, this);
-                exa.dllFileName = f.Substring(modulePath.Length, f.Length - modulePath.Length - 4);
+                exa.dllFileName = f.Substring(Core.modulePath.Length, f.Length - Core.modulePath.Length - 4);
+                //exa.dllFileName = f.Substring(Core.modulePath.Length);
+                exa.dataPath = Core.moduleDataPath + exa.dllFileName + "/";
+                if (!Directory.Exists(exa.dataPath)) Directory.CreateDirectory(exa.dataPath);
+
                 Core.loadedModules.Add(exa);
 
-                loadMenuStripItems(exa);
                 ToolStripMenuItem toolStripMenuItem = new ToolStripMenuItem()
                 {
                     Text = exa.getTitle(),
@@ -120,20 +179,31 @@ namespace ExpandableWinform
 
             _Core.addSwitchPageHotkey(loadedModules.ToArray());
 
-            foreach(Expandable exa in loadedModules)
+            foreach (Expandable exa in Core.loadedModules)
             {
-                loadModule(exa);
+                if (!Core.loadConfig(exa.dllFileName, exa.config, exa.hotkeys))
+                {
+                    //無法讀取設定檔，則強制產生設定檔
+                    exa.isConfigChanged = true;
+                }
             }
+
         }
 
         private void loadModule(Expandable exa)
         {
+            if (exa.dllFileName == Core.CORE_ID)
+            {
+                exa.run();
+                return;
+            }
+
             TabPage tpage = new TabPage(exa.getTitle())
             {
                 Padding = new Padding(3),
                 TabIndex = tabControl.TabCount,
                 UseVisualStyleBackColor = true,
-                Tag = exa.GetType()
+                Tag = exa
             };
             tpage.Controls.Add(exa.mainPanel);
             exa.mainPanel.Dock = DockStyle.Fill;
@@ -142,52 +212,100 @@ namespace ExpandableWinform
             ToolStripMenuItem item = modulesToolStripMenuItem.DropDown.Items.Cast<ToolStripMenuItem>()
                 .Where(_ => _.Tag.GetType().Equals(exa.GetType())).First();
 
+            loadMenuStripItems(exa);
+
             exa.run();
+
+            Core.setModuleEnabled(exa.dllFileName, true);
             item.Checked = true;
+        }
+
+        private void unloadModule(Expandable exa)
+        {
+            Type type = exa.GetType();
+            IEnumerable<Control> ien = tabControl.Controls.Cast<Control>();
+            TabPage page = (TabPage)ien.Where(_ => type.Equals(_.Tag.GetType())).First();
+            removeMenuStripItems(exa);
+
+            Core.saveConfig(exa, exa.config, exa.hotkeys);
+            tabControl.Controls.Remove(page);
+            exa.quit();
+
+            Core.setModuleEnabled(exa.dllFileName, false);
+        }
+
+        private void removeMenuStripItems(Expandable exa)
+        {
+            foreach (ToolStripMenuItem bItem in MainMenuStrip.Items)
+            {
+                if (bItem.Text == _Core.getString("str_modules")) continue;
+                List<ToolStripMenuItem> removes = new List<ToolStripMenuItem>();
+
+                foreach (ToolStripMenuItem item in bItem.DropDownItems)
+                {
+                    if (item.Tag == null) continue;
+                    if ((string)item.Tag == exa.dllFileName)
+                    {
+                        removes.Add(item);
+                    }
+                }
+                foreach (ToolStripMenuItem item in removes)
+                {
+                    bItem.DropDownItems.Remove(item);
+                }
+
+                if (bItem.DropDownItems.Count == 0) bItem.Visible = false;
+            }
         }
 
         private void loadMenuStripItems(Expandable exa)
         {
             MenuStruct[] menuStructs = exa.menuStructs;
             if (menuStructs == null) return;
-            foreach(MenuStruct ms in menuStructs)
+            foreach (MenuStruct ms in menuStructs)
             {
                 ToolStripMenuItem menuItem = createMenuItem(exa, ms);
-                addMenuItem(ms.field, menuItem);
+                menuItem.Tag = exa.dllFileName;
+                addMenuItem(ms.field, exa, menuItem);
             }
         }
 
-        private void addMenuItem(MenuStripField field, ToolStripMenuItem item)
+        private void addMenuItem(MenuStripField field, Expandable exa, ToolStripMenuItem item)
         {
-            IEnumerable<ToolStripMenuItem> menuItems = MainMenuStrip.Items.Cast<ToolStripMenuItem>();
             ToolStripMenuItem menu;
 
             switch (field)
             {
                 case MenuStripField.File:
-                    menu = menuItems.Where(_ => _.Text == "File").First();
+                    menu = fileToolStripMenuItem;
                     menu.DropDownItems.Insert(0, item);
                     break;
                 case MenuStripField.View:
-                    menu = menuItems.Where(_ => _.Text == "View").First();
+                    menu = viewToolStripMenuItem;
                     menu.DropDownItems.Insert(0, item);
                     break;
                 case MenuStripField.Tool:
-                    menu = menuItems.Where(_ => _.Text == "Tool").First();
+                    menu = toolToolStripMenuItem;
                     menu.DropDownItems.Insert(0, item);
                     break;
                 case MenuStripField.Option:
-                    menu = menuItems.Where(_ => _.Text == "Option").First();
+                    menu = optionToolStripMenuItem;
+                    menu.DropDownItems.Insert(0, item);
+                    break;
+                case MenuStripField.Self:
+                    IEnumerable<ToolStripMenuItem> menuItems
+                        = modulesToolStripMenuItem.DropDownItems.Cast<ToolStripMenuItem>();
+                    menu = menuItems.First(_ => ((Expandable)_.Tag).dllFileName == exa.dllFileName);
                     menu.DropDownItems.Insert(0, item);
                     break;
                 case MenuStripField.Others:
                 default:
-                    menu = menuItems.Where(_ => _.Text == "Others").First();
+                    menu = othersToolStripMenuItem;
                     menu.DropDownItems.Insert(0, item);
                     break;
             }
             menu.Visible = true;
-            
+
         }
 
         private ToolStripMenuItem createMenuItem(Expandable exa, MenuStruct menuStruct)
@@ -203,10 +321,10 @@ namespace ExpandableWinform
                 menuItem.Click += menuStruct.action;
             }
 
-            if(menuStruct.dropDownItems != null)
+            if (menuStruct.dropDownItems != null)
             {
                 List<ToolStripMenuItem> items = new List<ToolStripMenuItem>();
-                foreach(MenuStruct ms in menuStruct.dropDownItems)
+                foreach (MenuStruct ms in menuStruct.dropDownItems)
                 {
                     items.Add(createMenuItem(exa, ms));
                 }
@@ -223,19 +341,14 @@ namespace ExpandableWinform
             if (item.Checked)
             {
                 Expandable exa = (Expandable)item.Tag;
-                Type type = exa.GetType();             
-                IEnumerable<Control> ien = tabControl.Controls.Cast<Control>();
-                TabPage page = (TabPage)ien.Where(_ => type.Equals(_.Tag)).First();
-
-                Core.saveConfig(exa, exa.config, exa.hotkeys);
-                tabControl.Controls.Remove(page);                
-                exa.quit();
-
+                unloadModule(exa);
                 item.Checked = false;
+                item.DropDown.Enabled = false;
             }
             else
             {
                 loadModule((Expandable)item.Tag);
+                item.DropDown.Enabled = true;
                 //item.Checked = true;
             }
         }
@@ -245,7 +358,15 @@ namespace ExpandableWinform
             new Form_HotkeySetting().Show();
         }
 
-        private void optionToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void exportstrToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (Expandable exa in Core.loadedModules)
+            {
+                if (exa.strRes != null) exa.createDefaultStringResourceFile();
+            }
+        }
+
+        private void settingToolStripMenuItem_Click(object sender, EventArgs e)
         {
             new Form_Settings().Show();
         }

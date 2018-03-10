@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExpandableWinform", "ExpandableWinform\ExpandableWinform.csproj", "{DACF1C14-F2AC-4922-BB9B-D3089191D26D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MWinTool", "ExpandableWinform\MWinTool.csproj", "{DACF1C14-F2AC-4922-BB9B-D3089191D26D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestLib", "TestLib\TestLib.csproj", "{37951237-5AF5-486E-8926-9E57F20EE720}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Expandable", "Expandable\Expandable.csproj", "{FA2C1C4C-EAC2-4CD9-9B06-D9929A05DE04}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ewpYoutubeHotkey", "ewpYoutubeHotkey\ewpYoutubeHotkey.csproj", "{324A01FA-9176-4367-A028-1FF520FF10FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ewpOsu!viewer", "ewpOsu!viewer\osu!viewer\ewpOsu!viewer.csproj", "{C508787B-40F5-4C5D-A2C5-0B2F0C38F8D5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{324A01FA-9176-4367-A028-1FF520FF10FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{324A01FA-9176-4367-A028-1FF520FF10FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{324A01FA-9176-4367-A028-1FF520FF10FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C508787B-40F5-4C5D-A2C5-0B2F0C38F8D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C508787B-40F5-4C5D-A2C5-0B2F0C38F8D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C508787B-40F5-4C5D-A2C5-0B2F0C38F8D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C508787B-40F5-4C5D-A2C5-0B2F0C38F8D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -9,7 +9,7 @@ namespace TestLib
 {
     public class ewpTestPlugin : Expandable
     {
-        public ewpTestPlugin(Form form) : base(form)
+        public ewpTestPlugin(ExpandableForm form) : base(form)
         {
         }
 

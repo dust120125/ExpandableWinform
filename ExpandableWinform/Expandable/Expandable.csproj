@@ -42,6 +42,9 @@
   <ItemGroup>
     <Compile Include="Attributes.cs" />
     <Compile Include="Expandable.cs" />
+    <Compile Include="ExpandableForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

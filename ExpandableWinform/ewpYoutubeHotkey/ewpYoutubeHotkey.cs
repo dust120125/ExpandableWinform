@@ -15,6 +15,8 @@ using OpenQA.Selenium.Support.Events;
 using OpenQA.Selenium.Chrome;
 
 using Dust.Expandable;
+using System.Reflection;
+using System.IO;
 
 namespace ewpYoutubeHotkey
 {
@@ -51,7 +53,7 @@ namespace ewpYoutubeHotkey
         [DllImport("user32.dll")]
         static extern bool RemoveMenu(int hMenu, uint uPosition, uint uFlags);
 
-        public ewpYoutubeHotkey(Form form) : base(form)
+        public ewpYoutubeHotkey(ExpandableForm form) : base(form)
         {
 
         }
@@ -127,14 +129,7 @@ namespace ewpYoutubeHotkey
 
         protected override MenuStruct[] createMenuStructs()
         {
-            return new MenuStruct[]{
-                new MenuStruct(MenuStripField.File, "Go url", "gurl", showUrlDialog)
-            };
-        }
-
-        private void showUrlDialog(object sender, EventArgs e)
-        {
-            Console.WriteLine("Show Dialog");
+            return null;
         }
 
         private void play(params object[] args)
@@ -226,7 +221,12 @@ namespace ewpYoutubeHotkey
         public override void quit()
         {
             timer.Stop();
+            timer = null;
+
             webDriver.Quit();
+            webDriver = null;
+
+            javaScriptExecutor = null;
         }
 
         public static Process GetChildProcess(Process parent, string childName)
@@ -256,14 +256,29 @@ namespace ewpYoutubeHotkey
             return parentPid;
         }
 
+        private void createDriverExec(string fileName)
+        {
+            using (var s = Assembly.GetExecutingAssembly().GetManifestResourceStream("ewpYoutubeHotkey.chromedriver.exe"))
+            {
+                using(var file = File.Create(fileName))
+                {
+                    s.CopyTo(file);
+                }
+            }
+        }
+
         private void init()
         {
-            ChromeDriverService service = ChromeDriverService.CreateDefaultService();
+            string file = dataPath + "chromedriver.exe";
+            if (!File.Exists(file)) createDriverExec(file);
+
+            ChromeDriverService service = ChromeDriverService.CreateDefaultService(dataPath);
             service.HideCommandPromptWindow = true;
             ChromeOptions options = new ChromeOptions();
+            string home = myConfig.home;
             string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             options.AddArgument("user-data-dir=" + local + "/Google/Chrome/User Data/Default");
-            options.AddArgument("app=https://www.youtube.com/watch?v=-tKVN2mAKRI");
+            options.AddArgument("app=https://www.youtube.com");
             options.AddArgument("--window-size=1,1");
             options.AddArgument("--window-position=0,0");
             //options.AddArgument("headless");
@@ -346,7 +361,7 @@ namespace ewpYoutubeHotkey
                 clickEmpty();
 
                 if (isLoop() != loop) clickLoop();
-                //setVolume(myConfig.volume * maxVolume);
+                setVolume(myConfig.volume * maxVolume);
             }
         }
 
@@ -420,6 +435,8 @@ namespace ewpYoutubeHotkey
                 "}" +
                 "}";
             javaScriptExecutor.ExecuteScript(setVolume + "setVolume(" + vol + ");");
+            myConfig.volume = vol / maxVolume;
+            isConfigChanged = true;
         }
 
         private void addVolume(params object[] args)
@@ -451,7 +468,7 @@ namespace ewpYoutubeHotkey
                     "if (ad === null) return;" +
                     "skd = setInterval(skipAd, 1000);" +
                     "}" +
-                    "setTimeout(checkAd, 1000);";
+                    "setInterval(checkAd, 2000);";
             javaScriptExecutor.ExecuteScript(script);
         }
 
@@ -478,6 +495,5 @@ namespace ewpYoutubeHotkey
             javaScriptExecutor.ExecuteScript(script);
             loop = isLoop();
         }
-
     }
 }

@@ -13,12 +13,18 @@ namespace ExpandableWinform
 {
     public class Core : Expandable
     {
-        public const string CORE_ID = "#mwin_core!";
+        public const string modulePath = "./modules/";
+        public const string moduleDataPath = "./data/";
+
+        public const string CORE_ID = "mwin_core";
         public const string CORE_CONFIG_PATH = "./config.ini";
 
         public const string CONFIG_PATH = "./config/";
 
+        public const string LOCALIZATION_OPTION_FILE = "localization.ini";
+
         public static List<Expandable> loadedModules = new List<Expandable>();
+
         public static Dictionary<string, Hotkey[]> ModuleHotkeys = new Dictionary<string, Hotkey[]>();
         public static GlobalHotkey globalHotkey;
 
@@ -26,16 +32,22 @@ namespace ExpandableWinform
 
         private static Core _Core;
 
-        public static Core getInstance(Form form, TabControl tabControl)
+        public static Core getInstance()
+        {
+            return _Core;
+        }
+
+        public static Core getInstance(ExpandableForm form, TabControl tabControl)
         {
             if (_Core != null) return _Core;
             return _Core = new Core(form, tabControl);
         }
 
-        public Core(Form form, TabControl _tabControl) : base(form)
+        public Core(ExpandableForm form, TabControl _tabControl) : base(form)
         {
             this.dllFileName = CORE_ID;
             tabControl = _tabControl;
+            //AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
         }
 
         [Serializable]
@@ -88,6 +100,7 @@ namespace ExpandableWinform
                     MessageBox.Show(e.Message);
                 }
             }
+            exa.isConfigChanged = false;
         }
 
         public static bool loadConfig(string module, Expandable.IConfig config, Hotkey[] hks)
@@ -126,7 +139,9 @@ namespace ExpandableWinform
                 FieldInfo[] fields = confType.GetFields();
                 foreach (FieldInfo fi in fields)
                 {
-                    object value = tmp.Properties.Where(_ => _.name == fi.Name).First().value;
+                    object value = tmp.Properties.FirstOrDefault(_ => _.name == fi.Name).value;
+                    if (value == null) continue;
+
                     if (value.GetType().AssemblyQualifiedName == fi.FieldType.AssemblyQualifiedName)
                     {
                         fi.SetValue(config, value);
@@ -172,7 +187,25 @@ namespace ExpandableWinform
 
         public override void run()
         {
+            if (File.Exists(LOCALIZATION_OPTION_FILE))
+            {
+                loadLocalizationOption();
+            }
+            foreach(Expandable exa in loadedModules)
+            {
+                exa.loadStringResourceFile(getLangSymbol());
+            }
 
+            if (!languageOption.ContainsKey(setting.language))
+            {
+                setting.language = "English";
+            }
+        }
+
+        private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            Program.loadedAssembly.TryGetValue(args.Name, out Assembly assembly);
+            return assembly;
         }
 
         public override void quit()
@@ -185,12 +218,62 @@ namespace ExpandableWinform
             return new Hotkey[] { new Hotkey("Switch page", "switch_tab", null, switchPage, 0, false) };
         }
 
+        public string getLangSymbol()
+        {
+            languageOption.TryGetValue(setting.language, out string sym);
+            return sym == null ? languageOption["English"] : sym;
+        }
+
+        private Dictionary<string, string> languageOption = new Dictionary<string, string>()
+        {
+            { "English", "EN" }
+        };
+
+        private void loadLocalizationOption()
+        {
+            using (StreamReader sr = File.OpenText(LOCALIZATION_OPTION_FILE))
+            {
+                string[] kv;
+                char[] splitChar = new char[] { '=' };
+
+                while (!sr.EndOfStream)
+                {
+                    string line = sr.ReadLine();
+                    kv = line.Split(splitChar, 2, StringSplitOptions.RemoveEmptyEntries);
+                    kv[1] = kv[1].TrimStart();
+
+                    if (kv.Length <= 1) continue;
+                    if (languageOption.ContainsKey(kv[0]))
+                        throw new Exception(getString("str_same_lang", kv[0]));
+                    if (languageOption.ContainsValue(kv[1]))
+                        throw new Exception(getString("str_same_lang_symbol", kv[1]));
+
+                    languageOption[kv[0]] = kv[1];
+                }
+            }
+            comboBoxItemRes["languages"] = languageOption.Keys.ToArray();
+        }
+
         protected override Dictionary<string, string[]> createComboBoxItemRes()
         {
             return new Dictionary<string, string[]>()
             {
-                { "languages", new string[]{"English", "Chinese"} }
+                { "languages", new string[]{"English"} }
             };
+        }
+
+
+        [Serializable]
+        public struct ModuleLoadInfo
+        {
+            public string module;
+            public bool enable;
+
+            public ModuleLoadInfo(string module, bool load)
+            {
+                this.module = module;
+                this.enable = load;
+            }
         }
 
         public static Setting setting { get; private set; }
@@ -202,6 +285,12 @@ namespace ExpandableWinform
 
             [Description("str_hide")]
             public bool hideWhenClose = true;
+
+            [NonSettable]
+            public List<Property> enabledModules = new List<Property>()
+            {
+                new Property(CORE_ID, true)
+            };
         }
 
         protected override IConfig createConfig()
@@ -219,9 +308,25 @@ namespace ExpandableWinform
         {
             return new Dictionary<string, string>()
             {
+                { "str_file", "File" },
+                { "str_view", "View" },
+                { "str_tool", "Tool" },
+                { "str_option", "Option" },
+                { "str_modules", "Modules" },
+                { "str_others", "Others" },
+                { "str_exit", "Exit" },
+                { "str_hotkeys", "Hotkeys" },
+                { "str_export_str", "Export Default Language File" },
+                { "str_setting", "Setting" },
+
                 { "str_lang", "Language" },
                 { "str_hide", "Hide when window close" },
-                { "str_switch_tab", "Switch to next page" }
+                { "str_switch_tab", "Switch to next page" },
+
+                { "str_same_lang", "Language \"{0}\" is already exist !" },
+                { "str_same_lang_symbol", "Language Symbol \"{0}\" is already exist !" },
+
+                { "str_change_lang_msg", "You need to restart to apply language changes !" }
             };
         }
 
@@ -229,6 +334,21 @@ namespace ExpandableWinform
         {
             ModuleHotkeys[module] = hks;
             globalHotkey.setHotkeys(module, hks);
+        }
+
+        public static void setModuleEnabled(string module, bool enable)
+        {
+            _Core.isConfigChanged = true;
+
+            for (int i = 0; i < setting.enabledModules.Count; i++)
+            {
+                if (setting.enabledModules[i].name == module)
+                {
+                    setting.enabledModules.RemoveAt(i);                    
+                    break;
+                }
+            }
+            setting.enabledModules.Add(new Property(module, enable));
         }
 
         public void addSwitchPageHotkey(params Expandable[] exas)
@@ -248,8 +368,8 @@ namespace ExpandableWinform
         {            
             Expandable exa = (Expandable)args[0];
             Type type = exa.GetType();
-            TabPage page = tabControl.TabPages.Cast<TabPage>().First(_ => _.Tag.Equals(type));
-            tabControl.SelectedTab = page;
+            TabPage page = tabControl.TabPages.Cast<TabPage>().FirstOrDefault(_ => _.Tag.GetType().Equals(type));
+            if (page != null) tabControl.SelectedTab = page;
         }
 
         private void switchPage(params object[] args)
@@ -258,6 +378,5 @@ namespace ExpandableWinform
             int index = tabControl.SelectedIndex + 1 >= count ? 0 : tabControl.SelectedIndex + 1;
             tabControl.SelectTab(index);
         }
-
     }
 }
