@@ -121,6 +121,10 @@ namespace osu_viewer
 
             [NonSettable]
             public SortOptions SortBy = SortOptions.Title;
+            [NonSettable]
+            public bool random = false;
+            [NonSettable]
+            public string loop = "none";
         }
 
         protected override IConfig createConfig()
@@ -312,6 +316,9 @@ namespace osu_viewer
                     comboBox_SortBy.SelectedIndex = 3;
                     break;
             }
+
+            setLoopMode(setting.loop);
+            setRandomPlay(setting.random);
         }
 
         private void Slider_Volume_ValueChanged(object sender, EventArgs e)
@@ -993,19 +1000,25 @@ namespace osu_viewer
             Start_PlaylistManager();
         }
 
-        private void button_RandomPlay_Click(object sender, EventArgs e)
+        private void setRandomPlay(bool value)
         {
             nextList.Clear();
             previousList.Clear();
+            OsuPlaylist.setMode("shuffle", value);
+            setting.random = value;
+            if (value) button_RandomPlay.BackgroundImage = Properties.Resources.rp_d;
+            else button_RandomPlay.BackgroundImage = Properties.Resources.rp_u;
+        }
+
+        private void button_RandomPlay_Click(object sender, EventArgs e)
+        {
             if (OsuPlaylist.random)
             {
-                OsuPlaylist.setMode("shuffle", false);
-                button_RandomPlay.BackgroundImage = Properties.Resources.rp_u;
+                setRandomPlay(false);
             }
             else
             {
-                OsuPlaylist.setMode("shuffle", true);
-                button_RandomPlay.BackgroundImage = Properties.Resources.rp_d;
+                setRandomPlay(true);
             }
         }
 
@@ -1072,8 +1085,9 @@ namespace osu_viewer
 
         private void setLoopMode(string mode)
         {
+            setting.loop = mode;
             switch (mode)
-            {
+            {                
                 case "none":
                     OsuPlaylist.setMode("loop", false);
                     SINGLE_MEDIA_LOOP = false;
