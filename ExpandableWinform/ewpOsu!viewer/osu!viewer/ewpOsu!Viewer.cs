@@ -79,6 +79,7 @@ namespace osu_viewer
         private bool isPlaying;
 
         public static Dictionary<string, string> _strRes { get; private set; }
+        private bool componentsInitialized;
         public static ewpOsuViewer _instance { get; private set; }
 
         public ewpOsuViewer(ExpandableForm form) : base(form)
@@ -290,9 +291,7 @@ namespace osu_viewer
             listView_MediaInfo.DoubleClick += ListView_MediaInfo_DoubleClick;
 
             this.splitContainer1.SplitterMoved += setMediaInfoTitleSize;
-            _form.SizeChanged += ResizeControls;
-
-            ResizeControls(null, null);
+            mainPanel.SizeChanged += ResizeControls;
 
             listBox_Songs.Location = new Point(0, 0);
             listView_MediaInfo.Location = new Point(0, 0);
@@ -319,6 +318,8 @@ namespace osu_viewer
 
             setLoopMode(setting.loop);
             setRandomPlay(setting.random);
+
+            ResizeControls(null, null);
         }
 
         private void Slider_Volume_ValueChanged(object sender, EventArgs e)
@@ -350,10 +351,16 @@ namespace osu_viewer
 
         public override void quit()
         {
+            wmp_player.close();
+            wmp_player.Dispose();
+            wmp_player = null;
+
             wmp_factory.close();
             wmp_factory = null;
+
             audioPlayer.Dispose();
             audioPlayer = null;
+
             progressBarController.Stop();
             progressBarController = null;
 
@@ -363,6 +370,8 @@ namespace osu_viewer
                 GlobalResources.server.Stop();
             setting.Volume = slider_Volume.Value;
             isConfigChanged = true;
+
+            mainPanel.Controls.Clear();
         }
 
         private void ListBox_Songs_KeyUp(object sender, KeyEventArgs e)

@@ -8,6 +8,7 @@ using System.Threading;
 using System.Reflection;
 using System.IO;
 using System.Xml.Serialization;
+using System.Drawing;
 
 namespace Dust.Expandable
 {
@@ -251,6 +252,14 @@ namespace Dust.Expandable
             get { return _availableHotkeys; }
             set
             {
+                if (value == null || value == string.Empty)
+                {
+                    _availableHotkeys = null;
+                    targetHotkeys = null;
+                    retriggerableTargetHotkeys = null;
+                    return;
+                }
+
                 _availableHotkeys = value;
 
                 hotkeys.TryGetValue(_availableHotkeys, out Hotkey[] thk);
@@ -404,13 +413,23 @@ namespace Dust.Expandable
             return true;
         }
 
-        public void setHotkeys(string moudleName, Hotkey[] hks)
+        public void setHotkeys(string moduleName, Hotkey[] hks)
         {
             Hotkey[] tmp = hks.Where(_ => _.id != null && _.keys != null && _.action != null).ToArray();
             Hotkey[] hk = tmp.Where(_ => _.retriggerable == false).ToArray();
             Hotkey[] rthk = tmp.Where(_ => _.retriggerable == true).ToArray();
-            hotkeys[moudleName] = hk;
-            retriggerableHotkeys[moudleName] = rthk;
+            hotkeys[moduleName] = hk;
+            retriggerableHotkeys[moduleName] = rthk;
+        }
+
+        public void unsetHotkeys(string moduleName)
+        {
+            if (availableHotkeys == moduleName)
+            {
+                availableHotkeys = null;
+            }
+            hotkeys.Remove(moduleName);
+            retriggerableHotkeys.Remove(moduleName);
         }
 
     }

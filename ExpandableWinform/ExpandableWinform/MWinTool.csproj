@@ -37,7 +37,7 @@
   <ItemGroup>
     <Reference Include="Expandable">
       <HintPath>..\Expandable\bin\Debug\Expandable.dll</HintPath>
-      <Private>False</Private>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

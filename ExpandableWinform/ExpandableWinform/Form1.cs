@@ -109,15 +109,19 @@ namespace ExpandableWinform
         private void Quit()
         {
             Core.globalHotkey.stop();
-            try
+            foreach (Expandable exa in Core.runningModules)
             {
-                foreach (Expandable exa in Core.loadedModules)
+                try
                 {
                     exa.quit();
                     Core.saveConfig(exa, exa.config, exa.hotkeys);
                 }
+                catch (Exception e)
+                {
+                    string err = e.Message + "; StackTrace: " + e.StackTrace;
+                    Core.errLog(err);
+                }
             }
-            catch (Exception) { }
         }
 
         private Assembly loadAssembly(Assembly baseAssembly, string name)
@@ -148,7 +152,7 @@ namespace ExpandableWinform
                 Assembly assembly = Assembly.LoadFrom(f);
 
                 string[] needDlls = assembly.GetManifestResourceNames().Where(_ => _.EndsWith(".dll")).ToArray();
-                foreach(string name in needDlls)
+                foreach (string name in needDlls)
                 {
                     Assembly tmp = loadAssembly(assembly, name);
                     Program.loadedAssembly[tmp.FullName] = tmp;
@@ -192,6 +196,8 @@ namespace ExpandableWinform
 
         private void loadModule(Expandable exa)
         {
+            SuspendLayout();
+
             if (exa.dllFileName == Core.CORE_ID)
             {
                 exa.run();
@@ -206,7 +212,7 @@ namespace ExpandableWinform
                 Tag = exa
             };
             tpage.Controls.Add(exa.mainPanel);
-            exa.mainPanel.Dock = DockStyle.Fill;
+
 
             tabControl.Controls.Add(tpage);
             ToolStripMenuItem item = modulesToolStripMenuItem.DropDown.Items.Cast<ToolStripMenuItem>()
@@ -215,9 +221,22 @@ namespace ExpandableWinform
             loadMenuStripItems(exa);
 
             exa.run();
+            Core.runningModules.Add(exa);
+
+            exa.mainPanel.Size = new Size(1, 1);
+            exa.mainPanel.Dock = DockStyle.Fill;
+
+            if (exa.hotkeys != null) Core.enableHotkeys(exa.dllFileName, exa.hotkeys);
+            if (Core.globalHotkey.availableHotkeys == null
+                || Core.globalHotkey.availableHotkeys == string.Empty)
+            {
+                Core.globalHotkey.availableHotkeys = exa.dllFileName;
+            }
 
             Core.setModuleEnabled(exa.dllFileName, true);
             item.Checked = true;
+
+            ResumeLayout();
         }
 
         private void unloadModule(Expandable exa)
@@ -231,6 +250,7 @@ namespace ExpandableWinform
             tabControl.Controls.Remove(page);
             exa.quit();
 
+            Core.runningModules.Remove(exa);
             Core.setModuleEnabled(exa.dllFileName, false);
         }
 

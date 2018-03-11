@@ -23,6 +23,7 @@ namespace ExpandableWinform
 
         public const string LOCALIZATION_OPTION_FILE = "localization.ini";
 
+        public static List<Expandable> runningModules = new List<Expandable>();
         public static List<Expandable> loadedModules = new List<Expandable>();
 
         public static Dictionary<string, Hotkey[]> ModuleHotkeys = new Dictionary<string, Hotkey[]>();
@@ -191,7 +192,7 @@ namespace ExpandableWinform
             {
                 loadLocalizationOption();
             }
-            foreach(Expandable exa in loadedModules)
+            foreach (Expandable exa in loadedModules)
             {
                 exa.loadStringResourceFile(getLangSymbol());
             }
@@ -212,7 +213,7 @@ namespace ExpandableWinform
         {
 
         }
-        
+
         protected override Hotkey[] createHotkeys()
         {
             return new Hotkey[] { new Hotkey("Switch page", "switch_tab", null, switchPage, 0, false) };
@@ -333,7 +334,16 @@ namespace ExpandableWinform
         public static void reloadHotkeys(string module, Hotkey[] hks)
         {
             ModuleHotkeys[module] = hks;
+        }
+
+        public static void enableHotkeys(string module, Hotkey[] hks)
+        {
             globalHotkey.setHotkeys(module, hks);
+        }
+
+        public static void disableHotkeys(string module)
+        {
+            globalHotkey.unsetHotkeys(module);
         }
 
         public static void setModuleEnabled(string module, bool enable)
@@ -344,7 +354,7 @@ namespace ExpandableWinform
             {
                 if (setting.enabledModules[i].name == module)
                 {
-                    setting.enabledModules.RemoveAt(i);                    
+                    setting.enabledModules.RemoveAt(i);
                     break;
                 }
             }
@@ -354,7 +364,7 @@ namespace ExpandableWinform
         public void addSwitchPageHotkey(params Expandable[] exas)
         {
             List<Hotkey> hks = new List<Hotkey>();
-            foreach(Expandable exa in exas)
+            foreach (Expandable exa in exas)
             {
                 string name = exa.getTitle();
                 string id = "#sw_" + exa.dllFileName + "_!";
@@ -365,7 +375,7 @@ namespace ExpandableWinform
         }
 
         private void switchToPage(params object[] args)
-        {            
+        {
             Expandable exa = (Expandable)args[0];
             Type type = exa.GetType();
             TabPage page = tabControl.TabPages.Cast<TabPage>().FirstOrDefault(_ => _.Tag.GetType().Equals(type));
@@ -377,6 +387,14 @@ namespace ExpandableWinform
             int count = tabControl.TabCount;
             int index = tabControl.SelectedIndex + 1 >= count ? 0 : tabControl.SelectedIndex + 1;
             tabControl.SelectTab(index);
+        }
+        
+        public static void errLog(string str)
+        {
+            using (StreamWriter errLogStream = File.AppendText("err.log"))
+            {
+                errLogStream.WriteLine("#Error: " + str);
+            }
         }
     }
 }
