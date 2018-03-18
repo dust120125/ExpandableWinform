@@ -37,9 +37,17 @@ namespace ExpandableWinform
             Core.globalHotkey = new GlobalHotkey(this);
             Core.globalHotkey.gerenalHotkey = Core.CORE_ID;
 
+            SizeChanged += Form1_SizeChanged;
             tabControl.SelectedIndexChanged += TabControl_SelectedIndexChanged;
 
             loadModuleFiles();
+            Core.runningModules.Add(_Core);
+        }
+
+        private void Form1_SizeChanged(object sender, EventArgs e)
+        {
+            Size size = new Size(ClientSize.Width, ClientSize.Height - MainMenuStrip.ClientSize.Height);
+            mainPanel.Size = size;
         }
 
         private void TabControl_SelectedIndexChanged(object sender, EventArgs e)
@@ -205,13 +213,13 @@ namespace ExpandableWinform
             }
 
             TabPage tpage = new TabPage(exa.getTitle())
-            {
+            {                
                 Padding = new Padding(3),
                 TabIndex = tabControl.TabCount,
                 UseVisualStyleBackColor = true,
                 Tag = exa
             };
-            tpage.Controls.Add(exa.mainPanel);
+            tpage.Controls.Add(exa.mainPanel);            
 
 
             tabControl.Controls.Add(tpage);
