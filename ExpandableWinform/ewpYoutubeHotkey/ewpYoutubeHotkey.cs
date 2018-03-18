@@ -176,6 +176,7 @@ namespace ewpYoutubeHotkey
 
         private void next(params object[] args)
         {
+            //showToolbar();
             string script =
                 "var btm = document.getElementsByClassName(\"ytp-next-button ytp-button\")[0];" +
                 "if (btm != null){" +
@@ -192,12 +193,11 @@ namespace ewpYoutubeHotkey
 
         private void back(params object[] args)
         {
+            //showToolbar();
             string script =
                 "var btm = document.getElementsByClassName(\"ytp-prev-button ytp-button\")[0];" +
                 "if (btm != null){" +
-                "var url = btm.getAttribute(\"href\");" +
-                "if (url != null) btm.click();" +
-                "else return \"no-pre\";" +
+                "btm.click();" +
                 "} else return \"no-pre\";";
             string result = (string)javaScriptExecutor.ExecuteScript(script);
             if (result != null && result == "no-pre")
@@ -353,8 +353,8 @@ namespace ewpYoutubeHotkey
 
                 if (myConfig.skipAd) skipAd();
 
-                getVolume();
-
+                getVolume();  
+                
                 //先讓右鍵選單顯示一次，之後才能抓到循環撥放按鍵
                 showContextMenu();
                 //按下空白處關閉右鍵選單
@@ -363,6 +363,24 @@ namespace ewpYoutubeHotkey
                 if (isLoop() != loop) clickLoop();
                 setVolume(myConfig.volume * maxVolume);
             }
+        }
+
+        private void showToolbar()
+        {
+            //讓撥放器狀態欄顯示出來
+            string script =
+                "var element = document.getElementById('movie_player');" +
+                "if (window.CustomEvent)" +
+                "{" +
+                    "element.dispatchEvent(new CustomEvent('touchstart'));" +
+                "}" +
+                "else if (document.createEvent)" +
+                "{" +
+                    "var ev = document.createEvent('HTMLEvents');" +
+                    "ev.initEvent('touchstart', true, false);" +
+                    "element.dispatchEvent(ev);" +
+                "}";
+            javaScriptExecutor.ExecuteScript(script);
         }
 
         private void showContextMenu()
