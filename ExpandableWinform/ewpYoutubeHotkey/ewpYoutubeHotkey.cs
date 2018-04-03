@@ -318,24 +318,28 @@ namespace ewpYoutubeHotkey
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            string currentUrl = webDriver.Url;
-            if (lastUrl != currentUrl)
+            try
             {
-                Console.WriteLine("Url Changed");
-                documentCompleted = false;
-                lastUrl = currentUrl;
-                onUrlChanged(currentUrl);
-                WebDriverWait waiter = new WebDriverWait(webDriver, TimeSpan.FromSeconds(15));
-                try
+                string currentUrl = webDriver.Url;
+                if (lastUrl != currentUrl)
                 {
-                    waiter.Until(w => javaScriptExecutor.ExecuteScript(
-                        "return document.readyState").ToString() == "complete");
-                    Console.WriteLine("Document Completed");
-                    onDocumentCompleted(currentUrl);
-                    documentCompleted = true;
+                    Console.WriteLine("Url Changed");
+                    documentCompleted = false;
+                    lastUrl = currentUrl;
+                    onUrlChanged(currentUrl);
+                    WebDriverWait waiter = new WebDriverWait(webDriver, TimeSpan.FromSeconds(15));
+                    try
+                    {
+                        waiter.Until(w => javaScriptExecutor.ExecuteScript(
+                            "return document.readyState").ToString() == "complete");
+                        Console.WriteLine("Document Completed");
+                        onDocumentCompleted(currentUrl);
+                        documentCompleted = true;
+                    }
+                    catch (WebDriverTimeoutException) { }
                 }
-                catch (WebDriverTimeoutException) { }
             }
+            catch { }
         }
 
         private void onUrlChanged(string url)
@@ -348,6 +352,8 @@ namespace ewpYoutubeHotkey
         {
             if (isVideoPage)
             {
+                initVideoPageScripts();
+
                 maxVolume = getMaxVolume();
                 Console.WriteLine("maxVolume = " + maxVolume);
 
@@ -361,8 +367,64 @@ namespace ewpYoutubeHotkey
                 clickEmpty();
 
                 if (isLoop() != loop) clickLoop();
-                setVolume(myConfig.volume * maxVolume);
+                //firstOnVolumechangeEvent();                
+                setVolume2(myConfig.volume * maxVolume);
+                for (int i = 0; i < 10; i++)
+                {
+                    System.Threading.Thread.Sleep(125);
+                    setVolume2(myConfig.volume * maxVolume);
+                }
             }
+        }
+
+        private void embedJavaScript(string script)
+        {
+            javaScriptExecutor.ExecuteScript(
+                "var s=window.document.createElement('script');" +
+                "s.text = \"" + script + "\";" +
+                "window.document.head.appendChild(s);" +
+                "console.log(s);"
+                );
+        }
+
+        private void initVideoPageScripts()
+        {
+            embedJavaScript(JScript.INIT_VIDEO_PAGE);
+            embedJavaScript(JScript.VIDEO_PAGE_FUNCTIONS);
+            javaScriptExecutor.ExecuteScript("_maxVolume = getMaxVolume(); lockVolume()");
+        }
+
+        private void firstOnVolumechangeEvent()
+        {
+            string setVolume =
+                "function setVolume(vol){" +
+                "var v = document.getElementsByTagName(\"video\")[0];" +
+                "var vb = document.getElementsByClassName(\"ytp-mute-button ytp-button\")[0];" +
+                "var muted = v.muted;" +
+                "if (vol > 0)" +
+                "{" +
+                "if (muted) vb.click();" +
+                "v.volume = vol;" +
+                "var vs = document.getElementsByClassName(\"ytp-volume-slider-handle\")[0];" +
+                "var pos = 40 * vol / " + maxVolume + ";" +
+                "vs.style = \"left: \" + pos + \"px\";" +
+                "} else {" +
+                "if (!muted) vb.click();" +
+                "v.volume = 0;" +
+                "}" +
+                "}";
+            string onvolumechange =
+                "var s = document.getElementsByTagName('video')[0];" +
+                "var i = 0;" +
+                "s.onvolumechange = function(){" +
+                "setVolume(" + myConfig.volume * maxVolume + ");" +
+                "i++;" +
+                "if (i >= 2){" +
+                "s.onvolumechange = null;" +
+                "}" +
+                "};";
+
+            javaScriptExecutor.ExecuteScript(setVolume + onvolumechange);
         }
 
         private void showToolbar()
@@ -457,16 +519,25 @@ namespace ewpYoutubeHotkey
             isConfigChanged = true;
         }
 
+        private void setVolume2(double vol)
+        {
+            if (vol > maxVolume) vol = maxVolume;
+            else if (vol < 0) vol = 0;            
+            javaScriptExecutor.ExecuteScript("_volume = " + vol + "; vid.onvolumechange = null; setVolume(_volume); vid.onvolumechange = volumeLock;");
+            myConfig.volume = vol / maxVolume;
+            isConfigChanged = true;
+        }
+
         private void addVolume(params object[] args)
         {
             if (isVideoPage && documentCompleted)
-                setVolume(getVolume() + maxVolume / 15);
+                setVolume2(getVolume() + maxVolume / 15);
         }
 
         private void reduceVolume(params object[] args)
         {
             if (isVideoPage && documentCompleted)
-                setVolume(getVolume() - maxVolume / 15);
+                setVolume2(getVolume() - maxVolume / 15);
         }
 
         private void skipAd()
