@@ -304,8 +304,11 @@ namespace ewpYoutubeHotkey
             Process driverProcess = GetChildProcess(Process.GetCurrentProcess(), "chromedriver");
             Process webProcess = GetChildProcess(driverProcess, "chrome");
 
+            mainPanel.SizeChanged += MainPanel_SizeChanged;
+
             WindowsReStyle(webProcess);
-            wind.Size = new Size(600, 500);
+            int w = mainPanel.Width, h = mainPanel.Height;
+            wind.Size = new Size(w, h);
             SetParent(webProcess.MainWindowHandle, mainPanel.Handle);
             wind.Position = new Point(0, 0);
 
@@ -314,6 +317,14 @@ namespace ewpYoutubeHotkey
             timer.Interval = 1000;
             timer.Tick += Timer_Tick;
             timer.Start();
+        }
+
+        private void MainPanel_SizeChanged(object sender, EventArgs e)
+        {
+            IWindow wind = webDriver.Manage().Window;
+            int w = mainPanel.Width, h = mainPanel.Height;
+            wind.Size = new Size(w, h);
+            wind.Position = new Point(0, 0);
         }
 
         private void Timer_Tick(object sender, EventArgs e)
