@@ -411,6 +411,9 @@ namespace osu_viewer
             setting.Volume = slider_Volume.Value;
             isConfigChanged = true;
 
+            currentList = null;
+            currentOsuSong = null;
+
             mainPanel.Controls.Clear();
         }
 
@@ -626,7 +629,7 @@ namespace osu_viewer
                     }
                     else
                     {
-                        gfx.FillRectangle(Brushes.Transparent, new Rectangle(0, 0, bmp.Width, bmp.Height));
+                        return null;
                     }
                 }
                 return bmp;
@@ -634,7 +637,7 @@ namespace osu_viewer
             catch (Exception e)
             {
                 MessageBox.Show(e.Message);
-                return bmp;
+                return null;
             }
         }
 

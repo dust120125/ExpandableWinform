@@ -115,7 +115,17 @@ namespace osu_viewer
 
         public Image BackgroundImage
         {
-            get { return Image.FromFile(BackgroundFilename); }
+            get
+            {
+                try
+                {
+                    return Image.FromFile(BackgroundFilename);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
         }
 
         public static bool UNICODE = true;
