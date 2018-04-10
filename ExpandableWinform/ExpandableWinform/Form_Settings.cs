@@ -119,11 +119,21 @@ namespace ExpandableWinform
                 ComboBox tmp = new ComboBox
                 {
                     Anchor = (AnchorStyles.Top | AnchorStyles.Right),
-                    Text = value,
+                    DropDownStyle = ComboBoxStyle.DropDownList,
                     Location = new Point(valueBox_x, 6 + index * 28),
                     Size = new Size(150, 22),
+                    
                 };
                 tmp.Items.AddRange(comboBoxItems);
+                tmp.SelectedIndex = 0;
+                for (int i = 0; i < comboBoxItems.Length; i++)
+                {
+                    if(value == comboBoxItems[i])
+                    {
+                        tmp.SelectedIndex = i;
+                        break;
+                    }
+                }
                 control = tmp;
                 lab.Location = new Point(8, 6 + index * 28 + 3);
             }

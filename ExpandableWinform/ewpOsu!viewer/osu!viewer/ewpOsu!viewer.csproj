@@ -114,6 +114,7 @@
     <Compile Include="Slider.Designer.cs">
       <DependentUpon>Slider.cs</DependentUpon>
     </Compile>
+    <Compile Include="Util\LRUDictionary.cs" />
     <Compile Include="WmpAudioPlayer.cs" />
     <EmbeddedResource Include="clientDialog.resx">
       <DependentUpon>clientDialog.cs</DependentUpon>

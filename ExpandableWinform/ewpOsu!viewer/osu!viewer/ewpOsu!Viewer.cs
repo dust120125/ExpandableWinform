@@ -9,10 +9,12 @@ using System.Windows.Forms;
 using System.IO;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Reflection;
+using System.Drawing.Imaging;
 
 using CommonAudioPlayer;
 using Dust.Expandable;
-using System.Reflection;
+
 
 namespace osu_viewer
 {
@@ -84,7 +86,7 @@ namespace osu_viewer
 
         public ewpOsuViewer(ExpandableForm form) : base(form)
         {
-            _instance = this;            
+            _instance = this;
         }
 
         public override string getTitle()
@@ -123,9 +125,14 @@ namespace osu_viewer
             [NonSettable]
             public SortOptions SortBy = SortOptions.Title;
             [NonSettable]
+            public bool showBackground = true;
+            [NonSettable]
             public bool random = false;
             [NonSettable]
             public string loop = "none";
+
+            [NonSettable]
+            public int splitterDistance = 238;
         }
 
         protected override IConfig createConfig()
@@ -211,6 +218,7 @@ namespace osu_viewer
                 { "str_add_playlist", "Add to playlist" },
                 { "str_artist_first_short", "Artist Frist"},
                 { "str_sort_by", "Sort by"},
+                { "str_background", "Background"},
                 { "str_find_index", "Find index"}
             };
         }
@@ -289,8 +297,10 @@ namespace osu_viewer
             listBox_Songs.SelectedIndexChanged += ListBox_Songs_SelectedIndexChanged;
 
             listView_MediaInfo.DoubleClick += ListView_MediaInfo_DoubleClick;
+            listView_MediaInfo.SizeChanged += ListView_MediaInfo_SizeChanged;
 
-            this.splitContainer1.SplitterMoved += setMediaInfoTitleSize;
+            splitContainer1.SplitterDistance = setting.splitterDistance;
+            splitContainer1.SplitterMoved += setMediaInfoTitleSize;
             mainPanel.SizeChanged += ResizeControls;
 
             listBox_Songs.Location = new Point(0, 0);
@@ -300,6 +310,8 @@ namespace osu_viewer
 
             checkBox_Unicode.Checked = setting.UnicodeTitle;
             checkBox_ArtistFirst.Checked = setting.ArtistFirst;
+            checkBox_Background.Checked = setting.showBackground;
+
             switch (setting.SortBy)
             {
                 case SortOptions.Title:
@@ -322,6 +334,22 @@ namespace osu_viewer
             ResizeControls(null, null);
         }
 
+        private void ListView_MediaInfo_SizeChanged(object sender, EventArgs e)
+        {
+            if (!setting.showBackground) return;
+            updateMediaBackgroundImage();
+        }
+
+        private void updateMediaBackgroundImage()
+        {
+            if (currentList == null || listBox_Songs.SelectedIndex < 0) return;
+
+            OsuSong os = currentList.Items[listBox_Songs.SelectedIndex];
+            if (os == null || os.BackgroundFilenameWithoutPath == null) return;
+            listView_MediaInfo.BackgroundImage = getTransparentImage(OsuSong.getBackgroundImage(os), 0.1f,
+                listView_MediaInfo.ClientSize.Width, listView_MediaInfo.ClientSize.Height);
+        }
+
         private void Slider_Volume_ValueChanged(object sender, EventArgs e)
         {
             audioPlayer.volume = slider_Volume.Value;
@@ -331,6 +359,8 @@ namespace osu_viewer
         {
             int width = listView_MediaInfo.Width - 21 < 120 ? 120 : listView_MediaInfo.Width - 21;
             listView_MediaInfo.TileSize = new Size(width, listView_MediaInfo.TileSize.Height);
+            setting.splitterDistance = splitContainer1.SplitterDistance;
+            isConfigChanged = true;
         }
 
         private void ResizeControls(object sender, EventArgs e)
@@ -342,8 +372,18 @@ namespace osu_viewer
 
             int x = mainPanel.Size.Width - comboBox_SortBy.Size.Width - 8;
             comboBox_SortBy.Location = new Point(x, 5);
-            x = comboBox_SortBy.Location.X - this.label1.Size.Width - 6;
+
+            x = comboBox_SortBy.Location.X - label1.Size.Width - 6;
             label1.Location = new Point(x, 8);
+
+            x = label1.Location.X - checkBox_Background.Size.Width - 6;
+            checkBox_Background.Location = new Point(x, 8);
+
+            x = panel_PlayControls.ClientSize.Width - button_LoopPlay.Size.Width - 25;
+            button_LoopPlay.Location = new Point(x, 39);
+
+            x = button_LoopPlay.Location.X - button_RandomPlay.Size.Width - 5;
+            button_RandomPlay.Location = new Point(x, 39);
 
             progressBar_refreshList.Width = (int)(listBox_Songs.Width * 0.6);
             progressBar_refreshList.Location = new Point((listBox_Songs.Width - progressBar_refreshList.Width) / 2, (listBox_Songs.Height - progressBar_refreshList.Height) / 2);
@@ -558,7 +598,101 @@ namespace osu_viewer
             listView_MediaInfo.Items.Add(getString("str_beatmapset_id") + ": " + os.BeatmapSetID);
             listView_MediaInfo.Items.Add(getString("str_media_path") + ": " + os.AudioFilename);
             currentMediaInfo = os;
+
+            if (setting.showBackground && os.BackgroundFilename != null)
+            {
+                listView_MediaInfo.BackgroundImage = getTransparentImage(OsuSong.getBackgroundImage(os), 0.1f,
+                    listView_MediaInfo.ClientSize.Width, listView_MediaInfo.ClientSize.Height);
+            }
+
             listView_MediaInfo.EndUpdate();
+        }
+
+        private Image getTransparentImage(Image image, float opacity, int width, int height)
+        {
+            Bitmap bmp = new Bitmap(width, height);
+            try
+            {
+                using (Graphics gfx = Graphics.FromImage(bmp))
+                {
+                    ColorMatrix matrix = new ColorMatrix();
+                    matrix.Matrix33 = opacity;
+                    ImageAttributes attributes = new ImageAttributes();
+                    attributes.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+                    if (image != null)
+                    {
+                        gfx.DrawImage(image, new Rectangle(0, 0, bmp.Width, bmp.Height), 0, 0,
+                            image.Width, image.Height, GraphicsUnit.Pixel, attributes);
+                    }
+                    else
+                    {
+                        gfx.FillRectangle(Brushes.Transparent, new Rectangle(0, 0, bmp.Width, bmp.Height));
+                    }
+                }
+                return bmp;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return bmp;
+            }
+        }
+
+        private Image getTransparentImage2(Image image, float opacity)
+        {
+            int bytesPerPixel = 4;
+            if ((image.PixelFormat & PixelFormat.Indexed) == PixelFormat.Indexed)
+            {
+                // Cannot modify an image with indexed colors
+                return image;
+            }
+
+            Bitmap bmp = (Bitmap)image.Clone();
+
+            // Specify a pixel format.
+            PixelFormat pxf = PixelFormat.Format32bppArgb;
+
+            // Lock the bitmap's bits.
+            Rectangle rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
+            BitmapData bmpData = bmp.LockBits(rect, ImageLockMode.ReadWrite, pxf);
+
+            // Get the address of the first line.
+            IntPtr ptr = bmpData.Scan0;
+
+            // Declare an array to hold the bytes of the bitmap.
+            // This code is specific to a bitmap with 32 bits per pixels 
+            // (32 bits = 4 bytes, 3 for RGB and 1 byte for alpha).
+            int numBytes = bmp.Width * bmp.Height * bytesPerPixel;
+            byte[] argbValues = new byte[numBytes];
+
+            // Copy the ARGB values into the array.
+            System.Runtime.InteropServices.Marshal.Copy(ptr, argbValues, 0, numBytes);
+
+            // Manipulate the bitmap, such as changing the
+            // RGB values for all pixels in the the bitmap.
+            for (int counter = 0; counter < argbValues.Length; counter += bytesPerPixel)
+            {
+                // argbValues is in format BGRA (Blue, Green, Red, Alpha)
+
+                // If 100% transparent, skip pixel
+                if (argbValues[counter + bytesPerPixel - 1] == 0)
+                    continue;
+
+                int pos = 0;
+                pos++; // B value
+                pos++; // G value
+                pos++; // R value
+
+                argbValues[counter + pos] = (byte)(argbValues[counter + pos] * opacity);
+            }
+
+            // Copy the ARGB values back to the bitmap
+            System.Runtime.InteropServices.Marshal.Copy(argbValues, 0, ptr, numBytes);
+
+            // Unlock the bits.
+            bmp.UnlockBits(bmpData);
+
+            return bmp;
         }
 
         private void UpdatePlayingProgressBar()
@@ -886,6 +1020,20 @@ namespace osu_viewer
             resetMediaListText();
         }
 
+        private void checkBox_Background_CheckedChanged(object sender, EventArgs e)
+        {
+            setting.showBackground = checkBox_Background.Checked;
+            isConfigChanged = true;
+            if (checkBox_Background.Checked)
+            {
+                updateMediaBackgroundImage();
+            }
+            else
+            {
+                listView_MediaInfo.BackgroundImage = null;
+            }
+        }
+
         private void resetMediaListText()
         {
             listBox_Songs.BeginUpdate();
@@ -1096,7 +1244,7 @@ namespace osu_viewer
         {
             setting.loop = mode;
             switch (mode)
-            {                
+            {
                 case "none":
                     OsuPlaylist.setMode("loop", false);
                     SINGLE_MEDIA_LOOP = false;
@@ -1424,6 +1572,16 @@ namespace osu_viewer
             UpdateSongsList(list);
             textBox_SearchSongs.Text = null;
             setCurrentMedia(0, 1);
+        }
+
+
+        public class TransparentListView : ListView
+        {
+            public TransparentListView()
+            {
+                SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+                SetStyle(ControlStyles.Opaque, false);
+            }
         }
 
     }

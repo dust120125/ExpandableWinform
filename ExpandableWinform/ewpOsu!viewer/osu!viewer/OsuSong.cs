@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Drawing;
+using osu_viewer.Util;
 
 namespace osu_viewer
 {
@@ -27,6 +29,23 @@ namespace osu_viewer
         static char[] stringSeparatorsDot = { ',' };
         static char[] stringSeparatorsSpace = { ' ' };
         static char[] stringSeparatorsEquals = { '=' };
+
+        private static LRUDictionary<string, Image> ImageCache = new LRUDictionary<string, Image>(10);
+        public static Image getBackgroundImage(OsuSong os)
+        {
+            string bgFile = os.BackgroundFilename;
+            Image image = null;
+            if (ImageCache.TryGetValue(bgFile, out image))
+            {
+                return image;
+            }
+            else
+            {
+                image = os.BackgroundImage;
+                ImageCache.Add(bgFile, image);
+                return image;
+            }
+        }
 
         string TitleNoFound
         {
@@ -66,12 +85,24 @@ namespace osu_viewer
             private set { m_ArtistUnicode = value; }
         }
 
-        public String OsuFilename { get; private set; }        
+        public String AudioFilename {
+            get { return DirectoryName + '\\' + AudioFilenameWithoutPath; }
+        }
+
+        public String BackgroundFilename {
+            get { return DirectoryName + '\\' + BackgroundFilenameWithoutPath; }
+        }
+
+        public String OsuFilename { get; private set; }
+        public String DirectoryName { get; private set; }
+
         private String m_TitleASCII;
         private String m_TitleUnicode;
         private String m_ArtistASCII;
         private String m_ArtistUnicode;
-        public String AudioFilename { get; private set; }
+
+        public String AudioFilenameWithoutPath { get; private set; }
+        public String BackgroundFilenameWithoutPath { get; private set; }
         public String Creator { get; private set; }
         public String Source { get; private set; }
         public String Tags { get; private set; }
@@ -82,37 +113,62 @@ namespace osu_viewer
                 return File.Exists(AudioFilename) ? ewpOsuViewer.wmp_factory.newMedia(AudioFilename) : null;                
             } }
 
+        public Image BackgroundImage
+        {
+            get { return Image.FromFile(BackgroundFilename); }
+        }
+
         public static bool UNICODE = true;
         public static bool ARTIST_FRIST = false;
 
         public OsuSong(string title)
         {
             m_TitleASCII = title;
-            AudioFilename = title;
+            AudioFilenameWithoutPath = title;
             OsuFilename = title;
         }
 
         public OsuSong(FileInfo file)
         {
             OsuFilename = file.FullName;
+            DirectoryName = file.DirectoryName;
 
             StreamReader sr = file.OpenText();
+            char[] schar = new char[] { ',' };
             bool General = false, Metadata = false;
+            bool Events = false;
 
             String tmp;
             String[] infos;
             while((tmp = sr.ReadLine()) != null)
             {
-                if (!(General && Metadata))
+                if (!(General && Metadata && Events))
                 {
                     if (tmp == "[General]")
                         General = true;
                     else if (tmp == "[Metadata]")
                         Metadata = true;
+                    else if (tmp == "[Events]")
+                        Events = true;
                 }
                 else if (tmp.StartsWith("[")) break;
 
-                if (General || Metadata)
+                if (Events)
+                {
+                    if (tmp.StartsWith("0"))
+                    {
+                        infos = tmp.Split(schar, StringSplitOptions.RemoveEmptyEntries);
+                        if (infos.Length >= 3)
+                        {
+                            string imageFile = infos[2].Trim();
+                            if (imageFile.StartsWith("\""))
+                            {
+                                BackgroundFilenameWithoutPath = imageFile.Substring(1, imageFile.Length - 2);
+                            }
+                        }
+                    }
+                }
+                else if (General || Metadata)
                 {
                     if ((infos = tmp.Split(':')).Length > 0)
                     {
@@ -125,7 +181,7 @@ namespace osu_viewer
                                 m_TitleUnicode = tmp.Substring(tmp.IndexOf(':') + 1);
                                 break;
                             case "AudioFilename":
-                                AudioFilename = file.DirectoryName + "\\" + infos[1].Trim();
+                                AudioFilenameWithoutPath = infos[1].Trim();
                                 break;
                             case "Artist":
                                 m_ArtistASCII = tmp.Substring(tmp.IndexOf(':') + 1);

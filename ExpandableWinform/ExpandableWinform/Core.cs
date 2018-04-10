@@ -288,6 +288,12 @@ namespace ExpandableWinform
             public bool hideWhenClose = true;
 
             [NonSettable]
+            public int windowWidth = 620;
+
+            [NonSettable]
+            public int windowHeight = 526;
+
+            [NonSettable]
             public List<Property> enabledModules = new List<Property>()
             {
                 new Property(CORE_ID, true)

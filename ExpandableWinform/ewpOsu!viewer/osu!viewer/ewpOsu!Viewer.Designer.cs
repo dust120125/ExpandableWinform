@@ -22,7 +22,7 @@ namespace osu_viewer
             this.textBox_SearchSongs = new System.Windows.Forms.TextBox();
             this.panel_Lists = new System.Windows.Forms.Panel();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.listView_MediaInfo = new System.Windows.Forms.ListView();
+            this.listView_MediaInfo = new TransparentListView();
             this.listBox_Songs = new System.Windows.Forms.ListBox();
             this.progressBar_refreshList = new System.Windows.Forms.ProgressBar();
             this.panel_PlayControls = new System.Windows.Forms.Panel();
@@ -40,6 +40,7 @@ namespace osu_viewer
             this.slider_Volume = new osu_viewer.Slider();
             this.panel_Features2 = new System.Windows.Forms.Panel();
             this.checkBox_Unicode = new System.Windows.Forms.CheckBox();
+            this.checkBox_Background = new System.Windows.Forms.CheckBox(); 
             this.button_AddtoPlaylist = new System.Windows.Forms.Button();
             this.checkBox_ArtistFirst = new System.Windows.Forms.CheckBox();
             this.comboBox_SortBy = new System.Windows.Forms.ComboBox();
@@ -151,6 +152,7 @@ namespace osu_viewer
             // 
             // splitContainer1.Panel2
             // 
+            //this.splitContainer1.Panel2.Controls.Add(this.pictureBox_Bg);
             this.splitContainer1.Panel2.Controls.Add(this.listView_MediaInfo);
             this.splitContainer1.Size = new System.Drawing.Size(452, 231);
             this.splitContainer1.SplitterDistance = 238;
@@ -366,6 +368,7 @@ namespace osu_viewer
             this.panel_Features2.Controls.Add(this.checkBox_ArtistFirst);
             this.panel_Features2.Controls.Add(this.button_AddtoPlaylist);
             this.panel_Features2.Controls.Add(this.checkBox_Unicode);
+            this.panel_Features2.Controls.Add(this.checkBox_Background);
             this.panel_Features2.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panel_Features2.Location = new System.Drawing.Point(3, 262);
             this.panel_Features2.Name = "panel_Features2";
@@ -429,7 +432,20 @@ namespace osu_viewer
             this.label1.Text = getString("str_sort_by");
             x = comboBox_SortBy.Location.X - this.label1.Size.Width - 6;
             this.label1.Location = new System.Drawing.Point(x, 8);
-            this.label1.TabIndex = 11;        
+            this.label1.TabIndex = 11;
+            // 
+            // checkBox_Background
+            // 
+            this.checkBox_Background.AutoSize = true;
+            this.checkBox_Background.Checked = true;
+            this.checkBox_Background.CheckState = System.Windows.Forms.CheckState.Checked;            
+            this.checkBox_Background.Name = "checkBox_Background";
+            this.checkBox_Background.Size = new System.Drawing.Size(66, 16);
+            this.checkBox_Background.Text = getString("str_background");
+            this.checkBox_Background.UseVisualStyleBackColor = true;
+            x = label1.Location.X - this.checkBox_Background.Size.Width - 6;
+            this.checkBox_Background.Location = new System.Drawing.Point(x, 8);
+            this.checkBox_Background.CheckedChanged += new System.EventHandler(this.checkBox_Background_CheckedChanged);
             // 
             // button_FindIndex
             // 
@@ -485,7 +501,7 @@ namespace osu_viewer
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.ProgressBar progressBar_refreshList;
         private System.Windows.Forms.ListBox listBox_Songs;
-        private System.Windows.Forms.ListView listView_MediaInfo;
+        private TransparentListView listView_MediaInfo;
         private System.Windows.Forms.Panel panel_PlayControls;
         private Slider slider_Volume;
         private System.Windows.Forms.Button button_Stop;
@@ -506,6 +522,7 @@ namespace osu_viewer
         private System.Windows.Forms.CheckBox checkBox_ArtistFirst;
         private System.Windows.Forms.Button button_AddtoPlaylist;
         private System.Windows.Forms.CheckBox checkBox_Unicode;
+        private System.Windows.Forms.CheckBox checkBox_Background;
     }
 }
 

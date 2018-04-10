@@ -40,6 +40,8 @@ namespace ExpandableWinform
             SizeChanged += Form1_SizeChanged;
             tabControl.SelectedIndexChanged += TabControl_SelectedIndexChanged;
 
+            ClientSize = new Size(Core.setting.windowWidth, Core.setting.windowHeight);
+
             loadModuleFiles();
             Core.runningModules.Add(_Core);
         }
@@ -48,6 +50,10 @@ namespace ExpandableWinform
         {
             Size size = new Size(ClientSize.Width, ClientSize.Height - MainMenuStrip.ClientSize.Height);
             mainPanel.Size = size;
+
+            Core.setting.windowWidth = ClientSize.Width;
+            Core.setting.windowHeight = ClientSize.Height;
+            _Core.isConfigChanged = true;
         }
 
         private void TabControl_SelectedIndexChanged(object sender, EventArgs e)
@@ -200,6 +206,7 @@ namespace ExpandableWinform
                 }
             }
 
+            ClientSize = new Size(Core.setting.windowWidth, Core.setting.windowHeight);
         }
 
         private void loadModule(Expandable exa)
