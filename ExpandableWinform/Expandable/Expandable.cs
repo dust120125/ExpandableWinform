@@ -244,6 +244,7 @@ namespace Dust.Expandable
 
         private Keys[] allKeys;
 
+        //總是啟用Hotkey的Module id
         public string gerenalHotkey = "";
         private bool hotkeyLimit = true;
         private string _availableHotkeys;
@@ -420,6 +421,9 @@ namespace Dust.Expandable
             Hotkey[] rthk = tmp.Where(_ => _.retriggerable == true).ToArray();
             hotkeys[moduleName] = hk;
             retriggerableHotkeys[moduleName] = rthk;
+
+            //強制更新 availableHotkeys
+            availableHotkeys = availableHotkeys;
         }
 
         public void unsetHotkeys(string moduleName)

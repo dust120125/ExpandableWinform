@@ -195,7 +195,7 @@ namespace ExpandableWinform
                 loadedModules.Add(exa);
             }
 
-            _Core.addSwitchPageHotkey(loadedModules.ToArray());
+            _Core.addSwitchPageHotkey(loadedModules.ToArray());            
 
             foreach (Expandable exa in Core.loadedModules)
             {
@@ -206,6 +206,8 @@ namespace ExpandableWinform
                 }
             }
 
+            if (_Core.hotkeys != null) Core.enableHotkeys(_Core.dllFileName, _Core.hotkeys);
+
             ClientSize = new Size(Core.setting.windowWidth, Core.setting.windowHeight);
         }
 
@@ -215,7 +217,7 @@ namespace ExpandableWinform
 
             if (exa.dllFileName == Core.CORE_ID)
             {
-                exa.run();
+                exa.run();                
                 return;
             }
 
