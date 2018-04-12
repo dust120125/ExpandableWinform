@@ -443,6 +443,8 @@ namespace osu_viewer
             this.trackBar_BgOpacity.TickStyle = TickStyle.None;
             this.trackBar_BgOpacity.Minimum = 0;
             this.trackBar_BgOpacity.Maximum = 100;
+            this.trackBar_BgOpacity.SmallChange = 5;
+            this.trackBar_BgOpacity.LargeChange = 10;
             x = label1.Location.X - this.trackBar_BgOpacity.Size.Width - 6;
             this.trackBar_BgOpacity.Location = new System.Drawing.Point(x, 8);
             this.trackBar_BgOpacity.ValueChanged += TrackBar_BgOpacity_ValueChanged;

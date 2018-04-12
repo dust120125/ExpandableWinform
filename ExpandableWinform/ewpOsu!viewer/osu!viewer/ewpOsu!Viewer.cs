@@ -366,6 +366,8 @@ namespace osu_viewer
         {
             opacitySliderClicked = false;
             transparentImageCache.Clear();
+
+            if (!setting.showBackground) return;
             updateMediaBackgroundImage();
         }
 
@@ -380,6 +382,8 @@ namespace osu_viewer
 
             if (opacitySliderClicked) return;
             transparentImageCache.Clear();
+
+            if (!setting.showBackground) return;
             updateMediaBackgroundImage();
         }
 
