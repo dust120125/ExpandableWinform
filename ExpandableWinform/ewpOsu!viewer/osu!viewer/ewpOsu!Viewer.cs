@@ -1342,6 +1342,8 @@ namespace osu_viewer
             originList = list;
             UpdateSongsList(list);
             textBox_SearchSongs.Text = null;
+            nextList.Clear();
+            previousList.Clear();
             setCurrentMedia(0, 0);
         }
 
