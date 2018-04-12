@@ -1,21 +1,17 @@
-﻿using System;
+﻿using CommonAudioPlayer;
+using Dust.Expandable;
+using Dust.Image;
+using osu_viewer.Util;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
-using System.IO;
 using System.Threading;
-using System.Runtime.InteropServices;
-using System.Reflection;
-using System.Drawing.Imaging;
-
-using CommonAudioPlayer;
-using Dust.Expandable;
-using osu_viewer.Util;
-using Dust.Image;
+using System.Windows.Forms;
 
 namespace osu_viewer
 {
@@ -671,29 +667,18 @@ namespace osu_viewer
                 image = transparentImageCache[os.BackgroundFilename];
             }
 
-            return ConvertImageSize(image, width, height);
+            return ImageSizeConverter.ConvertImageSize(image, width, height);
         }
 
         private Image getTransparentImage(Image image, int width, int height, Color backCol, float opacity)
         {
             Image result = ImageTransparentSimulator.getTransparentImage(image, backCol, opacity);
-            return ConvertImageSize(result, width, height);
+            return ImageSizeConverter.ConvertImageSize(result, width, height);
         }
 
         private Image getTransparentImage(Image image, Color backCol, float opacity)
         {
             return ImageTransparentSimulator.getTransparentImage(image, backCol, opacity);
-        }
-
-        private Image ConvertImageSize(Image image, int width, int height)
-        {
-            Bitmap bmp = new Bitmap(width, height);
-            using (Graphics gfx = Graphics.FromImage(bmp))
-            {
-                gfx.DrawImage(image, 0, 0, width, height);
-            }
-
-            return bmp;
         }
 
         private void UpdatePlayingProgressBar()

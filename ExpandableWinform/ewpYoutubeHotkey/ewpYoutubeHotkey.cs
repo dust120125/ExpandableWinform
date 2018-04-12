@@ -1,22 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using System.Drawing;
-using System.Management;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using WKeys = System.Windows.Forms.Keys;
-
+﻿using Dust.Expandable;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
-using OpenQA.Selenium.Support.Events;
 using OpenQA.Selenium.Chrome;
-
-using Dust.Expandable;
-using System.Reflection;
+using OpenQA.Selenium.Support.Events;
+using OpenQA.Selenium.Support.UI;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
+using System.Management;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using WKeys = System.Windows.Forms.Keys;
 
 namespace ewpYoutubeHotkey
 {
