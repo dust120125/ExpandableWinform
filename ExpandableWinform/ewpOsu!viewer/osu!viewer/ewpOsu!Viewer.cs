@@ -14,7 +14,8 @@ using System.Drawing.Imaging;
 
 using CommonAudioPlayer;
 using Dust.Expandable;
-
+using osu_viewer.Util;
+using Dust.Image;
 
 namespace osu_viewer
 {
@@ -80,6 +81,10 @@ namespace osu_viewer
         private bool netClientMode;
         private bool isPlaying;
 
+        private LRUDictionary<string, Image> transparentImageCache;
+        private static readonly Font MEDIA_INFO_FONT = new Font(SystemFonts.DefaultFont.FontFamily, 10f, FontStyle.Bold);
+        private bool opacitySliderClicked;
+
         public static Dictionary<string, string> _strRes { get; private set; }
         private bool componentsInitialized;
         public static ewpOsuViewer _instance { get; private set; }
@@ -126,6 +131,8 @@ namespace osu_viewer
             public SortOptions SortBy = SortOptions.Title;
             [NonSettable]
             public bool showBackground = true;
+            [NonSettable]
+            public float backgroundOpacity = 0.7f;
             [NonSettable]
             public bool random = false;
             [NonSettable]
@@ -269,6 +276,7 @@ namespace osu_viewer
 
             OsuView.dataPath = dataPath;
             Form_PlayList.rootDir = dataPath;
+            transparentImageCache = new LRUDictionary<string, Image>(10);
 
             audioPlayer = new WmpAudioPlayer(wmp_player);
             wmp_player.settings.volume = setting.Volume;
@@ -312,6 +320,10 @@ namespace osu_viewer
             checkBox_ArtistFirst.Checked = setting.ArtistFirst;
             checkBox_Background.Checked = setting.showBackground;
 
+            trackBar_BgOpacity.Value = (int)(setting.backgroundOpacity * 100);
+            trackBar_BgOpacity.MouseDown += TrackBar_BgOpacity_MouseDown;
+            trackBar_BgOpacity.MouseUp += TrackBar_BgOpacity_MouseUp;
+
             switch (setting.SortBy)
             {
                 case SortOptions.Title:
@@ -346,8 +358,29 @@ namespace osu_viewer
 
             OsuSong os = currentList.Items[listBox_Songs.SelectedIndex];
             if (os == null || os.BackgroundFilenameWithoutPath == null) return;
-            listView_MediaInfo.BackgroundImage = getTransparentImage(OsuSong.getBackgroundImage(os), 0.1f,
-                listView_MediaInfo.ClientSize.Width, listView_MediaInfo.ClientSize.Height);
+            listView_MediaInfo.BackgroundImage = getTransparentImage(os,
+                    listView_MediaInfo.ClientSize.Width, listView_MediaInfo.ClientSize.Height, Color.White, setting.backgroundOpacity);
+        }
+
+        private void TrackBar_BgOpacity_MouseUp(object sender, MouseEventArgs e)
+        {
+            opacitySliderClicked = false;
+            transparentImageCache.Clear();
+            updateMediaBackgroundImage();
+        }
+
+        private void TrackBar_BgOpacity_MouseDown(object sender, MouseEventArgs e)
+        {
+            opacitySliderClicked = true;
+        }
+
+        private void TrackBar_BgOpacity_ValueChanged(object sender, EventArgs e)
+        {
+            setting.backgroundOpacity = trackBar_BgOpacity.Value / 100f;
+
+            if (opacitySliderClicked) return;
+            transparentImageCache.Clear();
+            updateMediaBackgroundImage();
         }
 
         private void Slider_Volume_ValueChanged(object sender, EventArgs e)
@@ -376,7 +409,10 @@ namespace osu_viewer
             x = comboBox_SortBy.Location.X - label1.Size.Width - 6;
             label1.Location = new Point(x, 8);
 
-            x = label1.Location.X - checkBox_Background.Size.Width - 6;
+            x = label1.Location.X - this.trackBar_BgOpacity.Size.Width - 6;
+            this.trackBar_BgOpacity.Location = new System.Drawing.Point(x, 8);
+
+            x = trackBar_BgOpacity.Location.X - checkBox_Background.Size.Width - 6;
             checkBox_Background.Location = new Point(x, 8);
 
             x = panel_PlayControls.ClientSize.Width - button_LoopPlay.Size.Width - 25;
@@ -413,6 +449,8 @@ namespace osu_viewer
 
             currentList = null;
             currentOsuSong = null;
+
+            transparentImageCache = null;
 
             mainPanel.Controls.Clear();
         }
@@ -602,98 +640,54 @@ namespace osu_viewer
             listView_MediaInfo.Items.Add(getString("str_media_path") + ": " + os.AudioFilename);
             currentMediaInfo = os;
 
+            foreach (ListViewItem item in listView_MediaInfo.Items)
+            {
+                item.Font = MEDIA_INFO_FONT;
+            }
+
             if (setting.showBackground && os.BackgroundFilename != null)
             {
-                listView_MediaInfo.BackgroundImage = getTransparentImage(OsuSong.getBackgroundImage(os), 0.1f,
-                    listView_MediaInfo.ClientSize.Width, listView_MediaInfo.ClientSize.Height);
+                listView_MediaInfo.BackgroundImage = getTransparentImage(os,
+                    listView_MediaInfo.ClientSize.Width, listView_MediaInfo.ClientSize.Height, Color.White, setting.backgroundOpacity);
             }
 
             listView_MediaInfo.EndUpdate();
         }
 
-        private Image getTransparentImage(Image image, float opacity, int width, int height)
+        private Image getTransparentImage(OsuSong os, int width, int height, Color backCol, float opacity)
         {
-            Bitmap bmp = new Bitmap(width, height);
-            try
+            Image image;
+            if (!transparentImageCache.ContainsKey(os.BackgroundFilename))
             {
-                using (Graphics gfx = Graphics.FromImage(bmp))
-                {
-                    ColorMatrix matrix = new ColorMatrix();
-                    matrix.Matrix33 = opacity;
-                    ImageAttributes attributes = new ImageAttributes();
-                    attributes.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
-                    if (image != null)
-                    {
-                        gfx.DrawImage(image, new Rectangle(0, 0, bmp.Width, bmp.Height), 0, 0,
-                            image.Width, image.Height, GraphicsUnit.Pixel, attributes);
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                }
-                return bmp;
+                image = getTransparentImage(os.BackgroundImage, Color.White, opacity);
+                transparentImageCache.Add(os.BackgroundFilename, image);
             }
-            catch (Exception e)
+            else
             {
-                MessageBox.Show(e.Message);
-                return null;
+                image = transparentImageCache[os.BackgroundFilename];
             }
+
+            return ConvertImageSize(image, width, height);
         }
 
-        private Image getTransparentImage2(Image image, float opacity)
+        private Image getTransparentImage(Image image, int width, int height, Color backCol, float opacity)
         {
-            int bytesPerPixel = 4;
-            if ((image.PixelFormat & PixelFormat.Indexed) == PixelFormat.Indexed)
+            Image result = ImageTransparentSimulator.getTransparentImage(image, backCol, opacity);
+            return ConvertImageSize(result, width, height);
+        }
+
+        private Image getTransparentImage(Image image, Color backCol, float opacity)
+        {
+            return ImageTransparentSimulator.getTransparentImage(image, backCol, opacity);
+        }
+
+        private Image ConvertImageSize(Image image, int width, int height)
+        {
+            Bitmap bmp = new Bitmap(width, height);
+            using (Graphics gfx = Graphics.FromImage(bmp))
             {
-                // Cannot modify an image with indexed colors
-                return image;
+                gfx.DrawImage(image, 0, 0, width, height);
             }
-
-            Bitmap bmp = (Bitmap)image.Clone();
-
-            // Specify a pixel format.
-            PixelFormat pxf = PixelFormat.Format32bppArgb;
-
-            // Lock the bitmap's bits.
-            Rectangle rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
-            BitmapData bmpData = bmp.LockBits(rect, ImageLockMode.ReadWrite, pxf);
-
-            // Get the address of the first line.
-            IntPtr ptr = bmpData.Scan0;
-
-            // Declare an array to hold the bytes of the bitmap.
-            // This code is specific to a bitmap with 32 bits per pixels 
-            // (32 bits = 4 bytes, 3 for RGB and 1 byte for alpha).
-            int numBytes = bmp.Width * bmp.Height * bytesPerPixel;
-            byte[] argbValues = new byte[numBytes];
-
-            // Copy the ARGB values into the array.
-            System.Runtime.InteropServices.Marshal.Copy(ptr, argbValues, 0, numBytes);
-
-            // Manipulate the bitmap, such as changing the
-            // RGB values for all pixels in the the bitmap.
-            for (int counter = 0; counter < argbValues.Length; counter += bytesPerPixel)
-            {
-                // argbValues is in format BGRA (Blue, Green, Red, Alpha)
-
-                // If 100% transparent, skip pixel
-                if (argbValues[counter + bytesPerPixel - 1] == 0)
-                    continue;
-
-                int pos = 0;
-                pos++; // B value
-                pos++; // G value
-                pos++; // R value
-
-                argbValues[counter + pos] = (byte)(argbValues[counter + pos] * opacity);
-            }
-
-            // Copy the ARGB values back to the bitmap
-            System.Runtime.InteropServices.Marshal.Copy(argbValues, 0, ptr, numBytes);
-
-            // Unlock the bits.
-            bmp.UnlockBits(bmpData);
 
             return bmp;
         }
@@ -1582,8 +1576,8 @@ namespace osu_viewer
         {
             public TransparentListView()
             {
-                SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-                SetStyle(ControlStyles.Opaque, false);
+                SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+                SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             }
         }
 

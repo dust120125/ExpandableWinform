@@ -40,7 +40,8 @@ namespace osu_viewer
             this.slider_Volume = new osu_viewer.Slider();
             this.panel_Features2 = new System.Windows.Forms.Panel();
             this.checkBox_Unicode = new System.Windows.Forms.CheckBox();
-            this.checkBox_Background = new System.Windows.Forms.CheckBox(); 
+            this.checkBox_Background = new System.Windows.Forms.CheckBox();
+            this.trackBar_BgOpacity = new System.Windows.Forms.TrackBar();
             this.button_AddtoPlaylist = new System.Windows.Forms.Button();
             this.checkBox_ArtistFirst = new System.Windows.Forms.CheckBox();
             this.comboBox_SortBy = new System.Windows.Forms.ComboBox();
@@ -369,6 +370,7 @@ namespace osu_viewer
             this.panel_Features2.Controls.Add(this.button_AddtoPlaylist);
             this.panel_Features2.Controls.Add(this.checkBox_Unicode);
             this.panel_Features2.Controls.Add(this.checkBox_Background);
+            this.panel_Features2.Controls.Add(this.trackBar_BgOpacity);
             this.panel_Features2.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panel_Features2.Location = new System.Drawing.Point(3, 262);
             this.panel_Features2.Name = "panel_Features2";
@@ -433,6 +435,17 @@ namespace osu_viewer
             x = comboBox_SortBy.Location.X - this.label1.Size.Width - 6;
             this.label1.Location = new System.Drawing.Point(x, 8);
             this.label1.TabIndex = 11;
+            //
+            // trackBar_BgOpacity
+            //
+            this.trackBar_BgOpacity.AutoSize = true;
+            this.trackBar_BgOpacity.Name = "trackBar_BgOpacity";
+            this.trackBar_BgOpacity.TickStyle = TickStyle.None;
+            this.trackBar_BgOpacity.Minimum = 0;
+            this.trackBar_BgOpacity.Maximum = 100;
+            x = label1.Location.X - this.trackBar_BgOpacity.Size.Width - 6;
+            this.trackBar_BgOpacity.Location = new System.Drawing.Point(x, 8);
+            this.trackBar_BgOpacity.ValueChanged += TrackBar_BgOpacity_ValueChanged;
             // 
             // checkBox_Background
             // 
@@ -443,7 +456,7 @@ namespace osu_viewer
             this.checkBox_Background.Size = new System.Drawing.Size(66, 16);
             this.checkBox_Background.Text = getString("str_background");
             this.checkBox_Background.UseVisualStyleBackColor = true;
-            x = label1.Location.X - this.checkBox_Background.Size.Width - 6;
+            x = trackBar_BgOpacity.Location.X - this.checkBox_Background.Size.Width - 6;
             this.checkBox_Background.Location = new System.Drawing.Point(x, 8);
             this.checkBox_Background.CheckedChanged += new System.EventHandler(this.checkBox_Background_CheckedChanged);
             // 
@@ -523,6 +536,7 @@ namespace osu_viewer
         private System.Windows.Forms.Button button_AddtoPlaylist;
         private System.Windows.Forms.CheckBox checkBox_Unicode;
         private System.Windows.Forms.CheckBox checkBox_Background;
+        private System.Windows.Forms.TrackBar trackBar_BgOpacity;
     }
 }
 

@@ -84,5 +84,11 @@ namespace osu_viewer.Util
             KeyAgeCounter.RemoveAt(0);
         }
 
+        public void Clear()
+        {
+            _Dictionary.Clear();
+            KeyAgeCounter.Clear();
+        }
+
     }
 }

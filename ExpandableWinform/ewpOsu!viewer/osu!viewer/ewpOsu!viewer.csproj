@@ -79,6 +79,7 @@
     </Compile>
     <Compile Include="CommonAudioPlayer\AudioPlayer.cs" />
     <Compile Include="CommonAudioPlayer\AudioPlayerInterface.cs" />
+    <Compile Include="Dust\Image\ImageTransparentSimulator.cs" />
     <Compile Include="ewpOsu!Viewer.cs" />
     <Compile Include="ewpOsu!Viewer.Designer.cs">
       <DependentUpon>ewpOsu!Viewer.cs</DependentUpon>
@@ -240,6 +241,7 @@
       <Name>Expandable</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
