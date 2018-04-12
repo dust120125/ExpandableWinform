@@ -656,6 +656,9 @@ namespace osu_viewer
 
         private Image getTransparentImage(OsuSong os, int width, int height, Color backCol, float opacity)
         {
+            if (os.BackgroundFilenameWithoutPath == null ||
+                os.BackgroundFilenameWithoutPath == string.Empty) return null;
+
             Image image;
             if (!transparentImageCache.ContainsKey(os.BackgroundFilename))
             {
