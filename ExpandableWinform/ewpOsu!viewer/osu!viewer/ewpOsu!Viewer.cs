@@ -46,6 +46,8 @@ namespace osu_viewer
 
         OsuView osuView;
         OsuSong currentOsuSong;
+        int currentMediaIndex;
+
         List<OsuSong> mOriginList;
         private List<OsuSong> originList
         {
@@ -398,7 +400,7 @@ namespace osu_viewer
 
         private void ResizeControls(object sender, EventArgs e)
         {
-            panel_Lists.Size = new Size(panel_Lists.Width, this.panel_Features2.Location.Y - this.panel_Lists.Location.Y);
+            panel_Lists.Size = new Size(panel_Lists.Width, panel_Features2.Location.Y - panel_Lists.Location.Y);
 
             int width = listView_MediaInfo.Width - 21 < 180 ? 180 : listView_MediaInfo.Width - 21;
             listView_MediaInfo.TileSize = new Size(width, listView_MediaInfo.TileSize.Height);
@@ -409,13 +411,16 @@ namespace osu_viewer
             x = comboBox_SortBy.Location.X - label1.Size.Width - 6;
             label1.Location = new Point(x, 8);
 
-            x = label1.Location.X - this.trackBar_BgOpacity.Size.Width - 6;
-            this.trackBar_BgOpacity.Location = new System.Drawing.Point(x, 8);
+            x = label1.Location.X - trackBar_BgOpacity.Size.Width - 6;
+            trackBar_BgOpacity.Location = new Point(x, 8);
 
             x = trackBar_BgOpacity.Location.X - checkBox_Background.Size.Width - 6;
             checkBox_Background.Location = new Point(x, 8);
 
-            x = panel_PlayControls.ClientSize.Width - button_LoopPlay.Size.Width - 25;
+            x = panel_PlayControls.ClientSize.Width - label_PlayingProgress.Size.Width - 45;
+            label_PlayingProgress.Location = new Point(x, 40);
+
+            x = label_PlayingProgress.Location.X - button_LoopPlay.Size.Width - 15;
             button_LoopPlay.Location = new Point(x, 39);
 
             x = button_LoopPlay.Location.X - button_RandomPlay.Size.Width - 5;
@@ -543,7 +548,13 @@ namespace osu_viewer
             double progress = x / progressBar_mediaPosition.Width;
             int time = (int)(progress * currentMediaLenght);
 
-            label_ProgressTime.Text = (time / 60) + ":" + (time % 60);
+            string text = "";
+            int sec = time % 60;
+            if (time < 600) text += '0';
+            text += (time / 60) + ":";
+            text += sec < 10 ? "0" + sec : sec.ToString();
+
+            label_ProgressTime.Text = text;
             label_ProgressTime.Location = new Point((int)x - 10, 5);
         }
 
@@ -746,6 +757,7 @@ namespace osu_viewer
 
         private void setCurrentMedia(int index, int mode) //mode 1 = from PreviewTime, 0 = from Head
         {
+            currentMediaIndex = index;
             if (currentList.Items.Count > 0)
             {
                 if (currentOsuSong != currentList.Items[index])
@@ -869,7 +881,7 @@ namespace osu_viewer
             }
             else
             {
-                int index = listBox_Songs.SelectedIndex + 1;
+                int index = currentMediaIndex + 1;
                 index = index > listBox_Songs.Items.Count - 1 ? 0 : index;
                 if (currentList.Items[index] != null)
                     setCurrentMedia(index, 0);
@@ -898,7 +910,7 @@ namespace osu_viewer
             }
             else
             {
-                int index = listBox_Songs.SelectedIndex - 1;
+                int index = currentMediaIndex - 1;
                 index = index < 0 ? listBox_Songs.Items.Count - 1 : index;
                 if (currentList.Items[index] != null)
                     setCurrentMedia(index, 0);
@@ -908,11 +920,11 @@ namespace osu_viewer
         private void PlayNextMedia()
         {
             OsuSong tmp;
-            if ((tmp = currentList.next(listBox_Songs.SelectedIndex)) != null)
+            if ((tmp = currentList.next(currentMediaIndex)) != null)
             {
                 if (!OsuPlaylist.random)
                 {
-                    int index = listBox_Songs.SelectedIndex + 1;
+                    int index = currentMediaIndex + 1;
                     index = index > listBox_Songs.Items.Count - 1 ? 0 : index;
                 }
 

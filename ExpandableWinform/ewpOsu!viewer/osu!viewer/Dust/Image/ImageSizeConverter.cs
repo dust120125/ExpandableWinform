@@ -23,6 +23,7 @@ namespace Dust.Image
 
         public static SImage ConvertImageSize(SImage image, int width, int height)
         {
+            if (width == 0 || height == 0) return image;
             Bitmap bmp = new Bitmap(width, height);
 
             double widthZoom = (double)width / image.Width;

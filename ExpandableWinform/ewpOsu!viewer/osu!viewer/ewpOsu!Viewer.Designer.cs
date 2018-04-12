@@ -274,6 +274,16 @@ namespace osu_viewer
             this.button_LoopPlay.UseVisualStyleBackColor = true;
             this.button_LoopPlay.Click += new System.EventHandler(this.button_LoopPlay_Click);
             // 
+            // label_ProgressTime
+            // 
+            this.label_ProgressTime.AutoSize = true;
+            this.label_ProgressTime.Location = new System.Drawing.Point(129, 4);
+            this.label_ProgressTime.Name = "label_ProgressTime";
+            this.label_ProgressTime.Size = new System.Drawing.Size(53, 12);
+            this.label_ProgressTime.TabIndex = 6;
+            this.label_ProgressTime.Text = "pointTime";
+            this.label_ProgressTime.Visible = false;
+            // 
             // button_Previous
             // 
             this.button_Previous.BackgroundImage = global::osu_viewer.Properties.Resources.previous;
@@ -297,16 +307,6 @@ namespace osu_viewer
             this.button_Next.TabIndex = 10;
             this.button_Next.UseVisualStyleBackColor = true;
             this.button_Next.Click += new System.EventHandler(this.button_Next_Click);
-            // 
-            // label_ProgressTime
-            // 
-            this.label_ProgressTime.AutoSize = true;
-            this.label_ProgressTime.Location = new System.Drawing.Point(129, 4);
-            this.label_ProgressTime.Name = "label_ProgressTime";
-            this.label_ProgressTime.Size = new System.Drawing.Size(53, 12);
-            this.label_ProgressTime.TabIndex = 6;
-            this.label_ProgressTime.Text = "pointTime";
-            this.label_ProgressTime.Visible = false;
             // 
             // button_Play
             // 
