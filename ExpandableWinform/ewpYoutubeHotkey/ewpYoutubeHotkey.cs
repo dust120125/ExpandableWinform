@@ -222,6 +222,7 @@ namespace ewpYoutubeHotkey
             webDriver.Quit();
             webDriver = null;
 
+            mainPanel.SizeChanged -= MainPanel_SizeChanged;
             javaScriptExecutor = null;
         }
 
