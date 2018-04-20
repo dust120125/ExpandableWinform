@@ -673,26 +673,15 @@ namespace osu_viewer
             Image image;
             if (!transparentImageCache.ContainsKey(os.BackgroundFilename))
             {
-                image = getTransparentImage(os.BackgroundImage, Color.White, opacity);
+                image = ImageTransparentSimulator.GetTransparentImage(os.BackgroundImage, Color.White, opacity, out Color avgColor);
                 transparentImageCache.Add(os.BackgroundFilename, image);
+                return ImageSizeConverter.ConvertImageSize(image, width, height, avgColor);
             }
             else
             {
                 image = transparentImageCache[os.BackgroundFilename];
+                return ImageSizeConverter.ConvertImageSize(image, width, height, ImageSizeConverter.GetAvgColor(image));
             }
-
-            return ImageSizeConverter.ConvertImageSize(image, width, height, ImageSizeConverter.GetAvgColor(image));
-        }
-
-        private Image getTransparentImage(Image image, int width, int height, Color backCol, float opacity)
-        {
-            Image result = ImageTransparentSimulator.getTransparentImage(image, backCol, opacity);
-            return ImageSizeConverter.ConvertImageSize(result, width, height, ImageSizeConverter.GetAvgColor(image));
-        }
-
-        private Image getTransparentImage(Image image, Color backCol, float opacity)
-        {
-            return ImageTransparentSimulator.getTransparentImage(image, backCol, opacity);
         }
 
         private void UpdatePlayingProgressBar()
