@@ -681,13 +681,13 @@ namespace osu_viewer
                 image = transparentImageCache[os.BackgroundFilename];
             }
 
-            return ImageSizeConverter.ConvertImageSize(image, width, height);
+            return ImageSizeConverter.ConvertImageSize(image, width, height, ImageSizeConverter.GetAvgColor(image));
         }
 
         private Image getTransparentImage(Image image, int width, int height, Color backCol, float opacity)
         {
             Image result = ImageTransparentSimulator.getTransparentImage(image, backCol, opacity);
-            return ImageSizeConverter.ConvertImageSize(result, width, height);
+            return ImageSizeConverter.ConvertImageSize(result, width, height, ImageSizeConverter.GetAvgColor(image));
         }
 
         private Image getTransparentImage(Image image, Color backCol, float opacity)
